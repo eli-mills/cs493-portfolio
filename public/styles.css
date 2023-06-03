@@ -1,0 +1,28 @@
+body {
+    font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    text-align: center;
+    background-color: lightsteelblue;
+    font-size: 1rem;
+}
+
+h1 {
+    font-size: 2rem;
+    text-decoration: underline dotted;
+}
+
+h3 {
+    padding: 0;
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+#welcome-msg {
+    max-width: 70%;
+    margin: auto;
+}
+
+#user-info-list {
+    max-width: 18rem;
+    margin: auto;
+    text-align: left;
+}
