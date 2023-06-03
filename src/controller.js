@@ -3,7 +3,7 @@ const db = require('./model');
 const { auth } = require('express-openid-connect');
 const {expressjwt: jwt} = require('express-jwt');
 const jwksRsa = require('jwks-rsa');
-const DOMAIN = "millse2-cs493-a7.us.auth0.com";
+const DOMAIN = "millse2-cs493-portfolio.us.auth0.com";
 
 // INITIALIZE ROUTERS
 const authentication = express.Router();
@@ -14,8 +14,8 @@ const owners = express.Router();
 const authMiddleware = auth({
     authRequired: false,
     auth0Logout: true,
-    baseURL: process.env.NODE_ENV === "production" ? "https://millse2-cs493-a7.uk.r.appspot.com" : 'http://localhost:3000',
-    issuerBaseURL: 'https://millse2-cs493-a7.us.auth0.com'
+    baseURL: process.env.NODE_ENV === "production" ? "https://millse2-cs493-portfolio.uk.r.appspot.com" : 'http://localhost:3000',
+    issuerBaseURL: `https://${DOMAIN}`
 });
 
 const checkJwt = jwt({
