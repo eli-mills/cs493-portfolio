@@ -22,6 +22,10 @@ class Entity {
         }
     }
 
+    getEntityData() {
+        throw Error("This method is not implemented 30 parent and should be overridden.")
+    }
+
     propsAreMissing() {
         return Object.values(this).reduce((acc, cur)=>acc || cur === undefined, false);
     }
@@ -44,7 +48,6 @@ class Entity {
     }
     
 }
-
 
 /**
  * Defines data structure to use when creating a new boat.
@@ -81,6 +84,9 @@ class Boat extends Entity{
         if (this.instanceIsInvalid()) throw new EntityValidationError();
     }
 
+    getEntityData() {
+        return {name: this.name, type: this.type, length: this.length, user: this.user}
+    }
 }
 
 class Load extends Entity{
@@ -118,9 +124,10 @@ class Load extends Entity{
  * @returns new boat, or false if error.
  */
 async function createBoat(boatData) {
+    const newBoatInstance = new Boat(boatData);
     const newBoat = {
         key: datastore.key('Boat'),
-        data: new Boat(boatData)
+        data: newBoatInstance.getEntityData()
     }
     try {
         await datastore.save(newBoat);

@@ -71,7 +71,7 @@ boats.route("/")
         }
     })
     .post(checkJwt, async (req, res) => {
-        req.body.owner = req.auth.sub;
+        req.body.user = req.auth.sub;
         const newBoat = await db.createBoat(req.body);
         res.status(201).json(newBoat);
     });
