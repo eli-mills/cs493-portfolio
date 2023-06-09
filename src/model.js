@@ -1,24 +1,107 @@
 const {Datastore} = require('@google-cloud/datastore');
 const datastore = new Datastore();
 
+class EntityValidationError extends Error {}
+
+/**
+ * Defines common data validation methods for Datastore Entities.
+ */
+class Entity {
+    /**
+     * 
+     * @returns true if any of the instance's properties are undefined, else false
+     */
+
+    constructor() {
+        this.validationMethods = {
+            minLength: (str, min) => {return str.length < min},
+            maxLength: (str, max) => {return str.length > max},
+            minVal: (num, min) => {return num < min},
+            maxVal: (num, max) => {return num > max},
+            ofForm: (str, re) => {return str.test(re)}
+        }
+    }
+
+    propsAreMissing() {
+        return Object.values(this).reduce((acc, cur)=>acc || cur === undefined, false);
+    }
+
+    propFailsValidationRules() {
+        for (const [prop, rules] of Object.entries(this.validation)) {
+            for (const [rule, allowedValue] of Object.entries(rules)) {
+                const validationRule = this.validationMethods[rule];
+                const actualValue = this[prop];
+                if (validationRule(actualValue, allowedValue)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    instanceIsInvalid() {
+        return this.propsAreMissing() || this.propFailsValidationRules();
+    }
+    
+}
+
+
 /**
  * Defines data structure to use when creating a new boat.
  */
-class Boat {
+class Boat extends Entity{
     /**
      * 
      * @param {string} name 
      * @param {string} type 
-     * @param {int} length 
-     * @param {boolean} public 
-     * @param {string} owner 
+     * @param {int} length
+     * @param {string} user 
      */
-    constructor({name, type, length, public: isPublic, owner}) {
+    constructor({name, type, length, user}) {
+        super();
+        // Signature defines required properties. Missing will be undefined.
         this.name = name;
         this.type = type;
         this.length = length;
-        this.public = isPublic; 
-        this.owner = owner;
+        this.user = user;
+        this.validation = {
+            name: {
+                minLength: 1,
+                maxLength: 50
+            },
+            type: {
+                minLength: 1,
+                maxLength: 50
+            },
+            length: {
+                minVal: 1,
+                maxVal: 9999
+            }
+        }
+        if (this.instanceIsInvalid()) throw new EntityValidationError();
+    }
+
+}
+
+class Load extends Entity{
+    constructor({volume, item, creation_date}) {
+        super();
+        this.volume = volume;
+        this.item = item;
+        this.creation_date = creation_date;
+        this.validation = {
+            volume: {
+                minVal: 1,
+                maxVal: 9999
+            }, 
+            item: {
+                minLength: 1,
+                maxLength: 50
+            },
+            creation_date: {
+                ofForm: /^\d{2}\/\d{2}\/\d{4}$/
+            }
+        }
     }
 }
 
@@ -123,4 +206,6 @@ module.exports = {
     getAllEntities,
     updateEntity,
     deleteEntity,
+    Boat,
+    EntityValidationError
 };
