@@ -81,7 +81,7 @@ class Boat extends Entity{
                 maxVal: 9999
             }
         }
-        if (this.instanceIsInvalid()) throw new EntityValidationError();
+        if (this.instanceIsInvalid()) throw new EntityValidationError(`Boat instance failed to initiate with properties name: ${name}, type: ${type}, length: ${length}`);
     }
 
     getEntityData() {
@@ -90,11 +90,12 @@ class Boat extends Entity{
 }
 
 class Load extends Entity{
-    constructor({volume, item, creation_date}) {
+    constructor({volume, item, creation_date, user}) {
         super();
         this.volume = volume;
         this.item = item;
         this.creation_date = creation_date;
+        this.user = user;
         this.validation = {
             volume: {
                 minVal: 1,
@@ -108,6 +109,11 @@ class Load extends Entity{
                 ofForm: /^\d{2}\/\d{2}\/\d{4}$/
             }
         }
+        if (this.instanceIsInvalid()) throw new EntityValidationError(`Load instance failed to initiate with properties volume: ${volume}, item: ${item}, creation_date: ${creation_date}`);
+    }
+
+    getEntityData() {
+        return {volume: this.volume, item: this.item, creation_date: this.creation_date, user: this.user}
     }
 }
 
@@ -123,15 +129,18 @@ class Load extends Entity{
  * 
  * @returns new boat, or false if error.
  */
-async function createBoat(boatData) {
-    const newBoatInstance = new Boat(boatData);
-    const newBoat = {
-        key: datastore.key('Boat'),
-        data: newBoatInstance.getEntityData()
+async function createEntity(kind, entityData) {
+    const newInstance = {
+        "Boat": () => {return new Boat(entityData)},
+        "Load": () => {return new Load(entityData)}
+    }[kind]();
+    const newEntity = {
+        key: datastore.key(kind),
+        data: newInstance.getEntityData()
     }
     try {
-        await datastore.save(newBoat);
-        return await getEntity("Boat", newBoat.key.id);
+        await datastore.save(newEntity);
+        return await getEntity(kind, newEntity.key.id);
     } catch(err) {
         console.error(err);
         return false;
@@ -209,10 +218,9 @@ async function deleteEntity(entity) {
 
 module.exports = {
     getEntity,
-    createBoat,
+    createEntity,
     getAllEntities,
     updateEntity,
     deleteEntity,
-    Boat,
-    EntityValidationError
+    EntityValidationError,
 };

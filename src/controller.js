@@ -72,7 +72,7 @@ boats.route("/")
     })
     .post(checkJwt, async (req, res) => {
         req.body.user = req.auth.sub;
-        const newBoat = await db.createBoat(req.body);
+        const newBoat = await db.createEntity("Boat", req.body);
         res.status(201).json(newBoat);
     });
 
