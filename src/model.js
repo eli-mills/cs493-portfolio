@@ -18,12 +18,16 @@ class Entity {
             maxLength: (str, max) => {return str.length > max},
             minVal: (num, min) => {return num < min},
             maxVal: (num, max) => {return num > max},
-            ofForm: (str, re) => {return str.test(re)}
+            ofForm: (str, re) => {return re.test(str)}
         }
     }
 
     getEntityData() {
-        throw Error("This method is not implemented 30 parent and should be overridden.")
+        throw Error("This method is not implemented in parent and should be overridden.")
+    }
+
+    getEntityKey(kind) {
+        throw Error("This method is not implemented in parent and should be overridden.")
     }
 
     propsAreMissing() {
@@ -92,6 +96,11 @@ class Boat extends Entity{
     getEntityData() {
         return {name: this.name, type: this.type, length: this.length, user: this.user}
     }
+
+    getEntityKey(kind) {
+        return datastore.key(kind);
+    }
+
 }
 
 class Load extends Entity{
@@ -120,6 +129,27 @@ class Load extends Entity{
     getEntityData() {
         return {volume: this.volume, item: this.item, creation_date: this.creation_date, user: this.user}
     }
+
+    getEntityKey(kind) {
+        return datastore.key(kind);
+    }
+
+}
+
+class User extends Entity {
+    constructor({sub}) {
+        super();
+        this.sub = sub;
+    }
+
+    getEntityData() {
+        return {sub: this.sub}
+    }
+
+    getEntityKey(kind) {
+        return datastore.key([kind, this.sub]);
+    }
+
 }
 
 /****************************************************************
@@ -143,15 +173,17 @@ function handleError(err) {
 async function createEntity(kind, entityData) {
     const newInstance = {
         "Boat": () => {return new Boat(entityData)},
-        "Load": () => {return new Load(entityData)}
+        "Load": () => {return new Load(entityData)},
+        "User": () => {return new User(entityData)},
     }[kind]();
     const newEntity = {
-        key: datastore.key(kind),
+        key: newInstance.getEntityKey(kind),
         data: newInstance.getEntityData()
     }
     try {
         await datastore.save(newEntity);
-        return await getEntity(kind, newEntity.key.id);
+        console.log(JSON.stringify(newEntity.key));
+        return await getEntity(kind, newEntity.key.id || newEntity.key.name,!newEntity.key.hasOwnProperty("id"));
     } catch(err) {
         return handleError(err);
     }
@@ -164,11 +196,13 @@ async function createEntity(kind, entityData) {
  * @param {string} entityId 
  * @returns matching object, or false if not found
  */
-async function getEntity(kind, entityId) {
-    const key = datastore.key([kind, datastore.int(entityId)]);
+async function getEntity(kind, entityId, isName=false) {
+    const id = isName ? entityId : datastore.int(entityId);
+    const key = datastore.key([kind, id]);
     try {
         const [retrievedEntity] = await datastore.get(key);
         retrievedEntity.id = retrievedEntity[Datastore.KEY].id;
+        console.log(JSON.stringify(retrievedEntity));
         return retrievedEntity;
     } catch (err) {
         return handleError(err);

@@ -3,14 +3,15 @@ const db = require('./model');
 const { auth } = require('express-openid-connect');
 const {expressjwt: jwt} = require('express-jwt');
 const jwksRsa = require('jwks-rsa');
+const jwt_decode = require('jwt-decode');
 const DOMAIN = "millse2-cs493-portfolio.us.auth0.com";
 
 // INITIALIZE ROUTERS
 const authentication = express.Router();
 const boats = express.Router();
-const owners = express.Router();
+const users = express.Router();
 
-// LIBARY MIDDLEWARE
+// LIBRARY MIDDLEWARE
 const authMiddleware = auth({
     authRequired: false,
     auth0Logout: true,
@@ -39,10 +40,12 @@ const checkJwt = jwt({
 
 // AUTHENTICATION
 authentication.use(authMiddleware);
-authentication.get("/", (req, res, next) => {
+authentication.get("/", async (req, res, next) => {
     if (!req.oidc.isAuthenticated()) {
         return next();         // Use Express static middleware to display login page.
     }
+    const decoded = jwt_decode(req.oidc.idToken);
+    await db.createEntity("User", {sub: decoded.sub});
     res.status(303).redirect("/user-info");
 });
 authentication.get("/user-info", (req, res) => {
@@ -87,11 +90,10 @@ boats.delete("/:boatId", checkJwt, async (req, res) => {
     res.status(204).end();
 });
 
-// OWNERS
-owners.get("/:ownerId/boats", async (req, res) => {
-    const allBoats = await db.getAllEntities("Boat");
-    const boatsByOwner = allBoats.filter(boat => boat.public && boat.owner === req.params.ownerId);
-    res.status(200).json(boatsByOwner);
+// USERS
+users.get("/", async (req, res) => {
+    const allUsers = await db.getAllEntities("User");
+    res.status(200).json(allUsers);
 });
 
 /****************************************************************
@@ -102,5 +104,5 @@ owners.get("/:ownerId/boats", async (req, res) => {
 module.exports = {
     authentication,
     boats,
-    owners,
+    users,
 }

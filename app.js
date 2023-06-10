@@ -3,7 +3,7 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT;
 const HOST = process.env.NODE_ENV === "production" ? "0.0.0.0" : "localhost";
-const { authentication, boats, owners } = require("./src/controller");
+const { authentication, boats, users } = require("./src/controller");
 
 app.enable("trust proxy");
 
@@ -16,7 +16,7 @@ app.enable("trust proxy");
 app.use(express.json());
 app.use("/", authentication);
 app.use("/boats", boats);
-app.use("/owners", owners);
+app.use("/users", users);
 app.use(express.static(path.join(__dirname, "public")));
 
 /****************************************************************
