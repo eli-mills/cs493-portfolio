@@ -4,6 +4,7 @@ const { auth } = require('express-openid-connect');
 const {expressjwt: jwt} = require('express-jwt');
 const jwksRsa = require('jwks-rsa');
 const jwt_decode = require('jwt-decode');
+const {wrap} = require('async-middleware');
 const DOMAIN = "millse2-cs493-portfolio.us.auth0.com";
 
 // INITIALIZE ROUTERS
@@ -48,15 +49,16 @@ const checkJwt = jwt({
  * @returns {object} copy of object with added self property
  */
 function addSelfLinkToResponse(req, res) {
-    try {
-        const retrievedEntity = req.retrievedEntity;
-        const selfLink = `${req.protocol}://${req.get("host")}${req.baseUrl}/${retrievedEntity.id}`;
-        retrievedEntity.self = selfLink;
-        res.json(retrievedEntity);
-    } catch (err) {
-        console.error(err);
-        return false;
-    }
+    const retrievedEntity = req.retrievedEntity;
+    const selfLink = `${req.protocol}://${req.get("host")}${req.baseUrl}/${retrievedEntity.id}`;
+    retrievedEntity.self = selfLink;
+    res.json(retrievedEntity);
+}
+
+function handleValidationError(err, req, res, next) {
+    if (! err instanceof db.EntityValidationError) next(err);
+    console.error(err);
+    res.status(400).json({"Error": "One or more of the request attributes are missing or invalid."});
 }
 
 /****************************************************************
@@ -67,46 +69,37 @@ function addSelfLinkToResponse(req, res) {
 
 // AUTHENTICATION
 authentication.use(authMiddleware);
-authentication.get("/", async (req, res, next) => {
+authentication.get("/", wrap(async (req, res, next) => {
     if (!req.oidc.isAuthenticated()) {
         return next();         // Use Express static middleware to display login page.
     }
     const decoded = jwt_decode(req.oidc.idToken);
     await db.createEntity("User", {sub: decoded.sub});
     res.status(303).redirect("/user-info");
-});
+}));
 authentication.get("/user-info", (req, res) => {
     res.json(req.oidc.idToken);
 });
 
 // BOATS
 boats.route("/")
-    .get(checkJwt, async (req, res) => {
+    .get(checkJwt, wrap(async (req, res) => {
         // User is authenticated
         const allBoats = await db.getAllEntities("Boat");
         const usersBoats = allBoats.filter(boat => boat.owner === req.auth.sub);
         res.status(200).json(usersBoats);
-    })
-    // Error handler for boats.get
-    .get(async (err, req, res, next) => {
-        if (err.name === "UnauthorizedError") {
-            // User is unauthenticated
-            const allBoats = await db.getAllEntities("Boat");
-            const allPublicBoats = allBoats.filter(boat => boat.public);
-            res.status(200).json(allPublicBoats);
-        } else {
-            // Some other error, pass to Express
-            console.error(err);
-            next(err);
-        }
-    })
-    .post(checkJwt, async (req, res, next) => {
+    }))
+    .post(checkJwt, wrap(async (req, res, next) => {
         req.body.user = req.auth.sub;
-        const newBoat = await db.createEntity("Boat", req.body);
-        req.retrievedEntity = newBoat;
-        res.status(201);
-        next();
-    });
+        try {
+            const newBoat = await db.createEntity("Boat", req.body);
+            req.retrievedEntity = newBoat;
+            res.status(201);
+            next();
+        } catch (e) {
+            next(e);
+        }
+    }));
 
 boats.delete("/:boatId", checkJwt, async (req, res) => {
     const boatToDelete = await db.getEntity("Boat", req.params.boatId);
@@ -120,6 +113,7 @@ boats.delete("/:boatId", checkJwt, async (req, res) => {
 });
 
 boats.use(addSelfLinkToResponse);
+boats.use(handleValidationError);
 
 // USERS
 users.get("/", async (req, res) => {
