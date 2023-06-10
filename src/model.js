@@ -36,10 +36,8 @@ class Entity {
 
     propFailsValidationRules() {
         for (const [prop, rules] of Object.entries(this.validation)) {
-            for (const [rule, allowedValue] of Object.entries(rules)) {
-                const validationRule = this.validationMethods[rule];
-                const actualValue = this[prop];
-                if (validationRule(actualValue, allowedValue)) {
+            for (const rule of rules) {
+                if (!rule(this[prop])) {
                     return true;
                 }
             }
@@ -77,18 +75,16 @@ class Boat extends Entity{
         this.length = length;
         this.user = user;
         this.validation = {
-            name: {
-                minLength: 1,
-                maxLength: 50
-            },
-            type: {
-                minLength: 1,
-                maxLength: 50
-            },
-            length: {
-                minVal: 1,
-                maxVal: 9999
-            }
+            name: [
+                name => name.length >= 1 && name.length <= 50,
+            ],
+            type: [
+                type => type.length >= 1 && type.length <= 50,
+            ],
+            length: [
+                length => length >=1 && length <= 9999,
+                length => Number.isInteger(length),
+            ]
         }
         this.validateInstance();
     }
