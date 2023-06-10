@@ -40,6 +40,17 @@ const checkJwt = jwt({
   });
 
 // CUSTOM MIDDLEWARE
+
+function getEntityFromParams(kind) {
+    const middlewareFn = async (req, res, next) => {
+        const retrievedEntity = await db.getEntity(kind, req.params.id);
+        if (!retrievedEntity) return res.status(404).json({"Error": `No ${kind.toLowerCase()} with this ${kind.toLowerCase()}_id exists.`});
+        req.retrievedEntity = retrievedEntity;
+        next();
+    }
+    return middlewareFn;
+}
+
 /**
  * Returns new copy of given object with added self URL.
  * 
@@ -48,11 +59,22 @@ const checkJwt = jwt({
  * @param {object} objToModify: the object where the self-link will be added
  * @returns {object} copy of object with added self property
  */
-function addSelfLinkToResponse(req, res) {
+function addSelfLinkToResponse(req, res, next) {
     const retrievedEntity = req.retrievedEntity;
+    if (!retrievedEntity) return next();
+
     const selfLink = `${req.protocol}://${req.get("host")}${req.baseUrl}/${retrievedEntity.id}`;
     retrievedEntity.self = selfLink;
     res.json(retrievedEntity);
+}
+
+function assertCorrectOwner(req, res, next) {
+    const retrievedEntity = req.retrievedEntity;
+    if (!retrievedEntity) return next();
+
+    const owner = retrievedEntity.user;
+    if (owner !== req.auth.sub) return res.status(403).json({"Error": "The authorized user does not have access to this boat."});
+    next();
 }
 
 function assertAcceptJson(req, res, next) {
@@ -98,6 +120,7 @@ authentication.get("/user-info", (req, res) => {
 // BOATS
 boats.route("/")
     .get(checkJwt, wrap(async (req, res) => {
+        console.log("GET /boats called");
         // User is authenticated
         const allBoats = await db.getAllEntities("Boat");
         const usersBoats = allBoats.filter(boat => boat.owner === req.auth.sub);
@@ -115,16 +138,23 @@ boats.route("/")
         }
     }));
 
-boats.delete("/:boatId", checkJwt, async (req, res) => {
-    const boatToDelete = await db.getEntity("Boat", req.params.boatId);
-    if (!boatToDelete || boatToDelete.owner !== req.auth.sub) {
-        // ID doesn't exist or owner is unauthorized
-        res.status(403).end();
-        return;
-    }
-    db.deleteEntity(boatToDelete);
-    res.status(204).end();
-});
+boats.route("/:id")
+    .all(getEntityFromParams("Boat"))
+    .get(checkJwt, assertAcceptJson, assertCorrectOwner, wrap(async (req, res, next) => {
+        // Passed all validation...
+        res.status(200);
+        next();
+    }))
+    .delete(checkJwt, async (req, res) => {
+        const boatToDelete = await db.getEntity("Boat", req.params.boatId);
+        if (!boatToDelete || boatToDelete.owner !== req.auth.sub) {
+            // ID doesn't exist or owner is unauthorized
+            res.status(403).end();
+            return;
+        }
+        db.deleteEntity(boatToDelete);
+        res.status(204).end();
+    });
 
 boats.use(addSelfLinkToResponse);
 boats.use(handleValidationError);
