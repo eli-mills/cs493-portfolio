@@ -47,6 +47,11 @@ class Entity {
         return this.propsAreMissing() || this.propFailsValidationRules();
     }
     
+    validateInstance() {
+        if (this.instanceIsInvalid()) {
+            throw new EntityValidationError(`${this.constructor.name} instance failed to validate with properties ${JSON.stringify(this.getEntityData())}`)
+        }
+    }
 }
 
 /**
@@ -81,7 +86,7 @@ class Boat extends Entity{
                 maxVal: 9999
             }
         }
-        if (this.instanceIsInvalid()) throw new EntityValidationError(`Boat instance failed to initiate with properties name: ${name}, type: ${type}, length: ${length}`);
+        this.validateInstance();
     }
 
     getEntityData() {
@@ -109,7 +114,7 @@ class Load extends Entity{
                 ofForm: /^\d{2}\/\d{2}\/\d{4}$/
             }
         }
-        if (this.instanceIsInvalid()) throw new EntityValidationError(`Load instance failed to initiate with properties volume: ${volume}, item: ${item}, creation_date: ${creation_date}`);
+        this.validateInstance();
     }
 
     getEntityData() {
@@ -122,12 +127,18 @@ class Load extends Entity{
  *                      DATABASE FUNCTIONS                      *
  *                                                              *
  ****************************************************************/
+
+function handleError(err) {
+    console.error(err);
+    return false;
+}
+
 /**
- * Adds a new boat to the database.
+ * Adds a new entity to the database.
  * 
- * @param {object} Object containing all boat properties
+ * @param {object} Object containing all entity properties
  * 
- * @returns new boat, or false if error.
+ * @returns new entity, or false if error.
  */
 async function createEntity(kind, entityData) {
     const newInstance = {
@@ -142,8 +153,7 @@ async function createEntity(kind, entityData) {
         await datastore.save(newEntity);
         return await getEntity(kind, newEntity.key.id);
     } catch(err) {
-        console.error(err);
-        return false;
+        return handleError(err);
     }
 }
 
@@ -161,8 +171,7 @@ async function getEntity(kind, entityId) {
         retrievedEntity.id = retrievedEntity[Datastore.KEY].id;
         return retrievedEntity;
     } catch (err) {
-        console.error(err);
-        return false;
+        return handleError(err);
     }
 }
 
@@ -179,8 +188,7 @@ async function getAllEntities(kind) {
         entities.forEach((entity) => entity.id = entity[Datastore.KEY].id);
         return entities;
     } catch (err) {
-        console.error(err);
-        return err
+        return handleError(err);
     }
 }
 
@@ -195,8 +203,7 @@ async function updateEntity(entity) {
         await datastore.save(entity);
         return true;
     } catch (err) {
-        console.error(err);
-        return false;
+        return handleError(err);
     }
 }
 
@@ -211,8 +218,7 @@ async function deleteEntity(entity) {
         await datastore.delete(entity[Datastore.KEY]);
         return true;
     } catch (err) {
-        console.error(err);
-        return false;
+        return handleError(err);
     }
 }
 
