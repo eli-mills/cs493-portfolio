@@ -13,13 +13,7 @@ class Entity {
      */
 
     constructor() {
-        this.validationMethods = {
-            minLength: (str, min) => {return str.length < min},
-            maxLength: (str, max) => {return str.length > max},
-            minVal: (num, min) => {return num < min},
-            maxVal: (num, max) => {return num > max},
-            ofForm: (str, re) => {return re.test(str)}
-        }
+        this.validation = {};
     }
 
     getEntityData() {
@@ -107,17 +101,15 @@ class Load extends Entity{
         this.creation_date = creation_date;
         this.user = user;
         this.validation = {
-            volume: {
-                minVal: 1,
-                maxVal: 9999
-            }, 
-            item: {
-                minLength: 1,
-                maxLength: 50
-            },
-            creation_date: {
-                ofForm: /^\d{2}\/\d{2}\/\d{4}$/
-            }
+            volume: [
+                vol => vol >= 1 && vol <= 9999,
+            ], 
+            item: [
+                item => item.length >= 1 && item.length <= 50,
+            ],
+            creation_date: [
+                date => /^\d{2}\/\d{2}\/\d{4}$/.test(date),
+            ]
         }
         this.validateInstance();
     }

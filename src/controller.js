@@ -55,8 +55,22 @@ function addSelfLinkToResponse(req, res) {
     res.json(retrievedEntity);
 }
 
+function assertAcceptJson(req, res, next) {
+    if (!req.accepts("json")) {
+        return res.status(406).json({"Error": "Requested MIME type is not supported."});
+    }
+    next();
+}
+
+function assertContentJson(req, res, next) {
+    if (! (req.get("Content-type") === "application/json")) {
+        return res.status(415).json({"Error": "Request body contains unsupported MIME type."});
+    }
+    next();
+}
+
 function handleValidationError(err, req, res, next) {
-    if (! err instanceof db.EntityValidationError) next(err);
+    if (! (err instanceof db.EntityValidationError)) return next(err);
     console.error(err);
     res.status(400).json({"Error": "One or more of the request attributes are missing or invalid."});
 }
@@ -89,7 +103,7 @@ boats.route("/")
         const usersBoats = allBoats.filter(boat => boat.owner === req.auth.sub);
         res.status(200).json(usersBoats);
     }))
-    .post(checkJwt, wrap(async (req, res, next) => {
+    .post(assertContentJson, assertAcceptJson, checkJwt, wrap(async (req, res, next) => {
         req.body.user = req.auth.sub;
         try {
             const newBoat = await db.createEntity("Boat", req.body);
