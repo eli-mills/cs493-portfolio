@@ -190,6 +190,7 @@ async function createEntity(kind, entityData) {
 }
 
 /**
+ * 
  * Retrieves an entity of the given kind with the given id from database.
  * 
  * @param {string} kind
