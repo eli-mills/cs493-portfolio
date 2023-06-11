@@ -137,7 +137,7 @@ authentication.get("/user-info", (req, res) => {
 boats.route("/")
     .get(checkJwt, wrap(async (req, res, next) => {
         // User is authenticated
-        const [usersBoats, cursor, count] = await db.getAllEntities("Boat", ["user", "=", req.auth.sub], req.query.cursor);
+        const [usersBoats, cursor, count] = await db.getAllEntities("Boat", req.auth.sub, req.query.cursor);
         req.retrievedEntities = usersBoats;
         req.retrievedMetaData = {cursor, count};
         console.log(cursor);
