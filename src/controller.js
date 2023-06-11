@@ -162,13 +162,13 @@ boats.route("/")
     .all(methodNotAllowed);
 
     boats.route("/:id")
-    .all(getEntityFromParams("Boat"))
-    .get(checkJwt, assertAcceptJson, assertCorrectOwner, wrap(async (req, res, next) => {
+    .all(checkJwt, getEntityFromParams("Boat"), assertCorrectOwner)
+    .get(assertAcceptJson, wrap(async (req, res, next) => {
         // Passed all validation...
         res.status(200);
         next();
     }), addSelfLinksToResponse)
-    .patch(checkJwt, assertAcceptJson, assertContentJson, wrap(async (req, res, next) => {
+    .patch(assertAcceptJson, assertContentJson, wrap(async (req, res, next) => {
         const [retrievedBoat] = req.retrievedEntities;
         try {
             req.retrievedEntities = [await db.updateEntity(retrievedBoat, req.body)];
@@ -178,12 +178,25 @@ boats.route("/")
             res.status(200);
             return next();
         } catch (err) {
-            console.log("caught error in patch");
             return next(err);
         }
 
     }), addSelfLinksToResponse)
-    .delete(checkJwt, async (req, res) => {
+    .put(assertAcceptJson, assertContentJson, wrap(async (req, res, next) => {
+        req.body.user = req.auth.sub;
+        const [retrievedBoat] = req.retrievedEntities;
+        try {
+            req.retrievedEntities = [await db.replaceEntity(retrievedBoat, req.body)];
+            if (!req.retrievedEntities[0]) {
+                return res.status(500).end();
+            }
+            res.status(200);
+            return next();
+        } catch (err) {
+            return next(err);
+        }
+    }), addSelfLinksToResponse)
+    .delete(async (req, res) => {
         const boatToDelete = await db.getEntity("Boat", req.params.boatId);
         if (!boatToDelete || boatToDelete.owner !== req.auth.sub) {
             // ID doesn't exist or owner is unauthorized

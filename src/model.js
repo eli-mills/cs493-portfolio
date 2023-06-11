@@ -15,6 +15,10 @@ class Entity {
 
     constructor() {
         this.validation = {};
+        this.validationResults = {
+            missingProps: false,
+            failedRules: {}
+        };
     }
 
     getEntityData() {
@@ -26,15 +30,23 @@ class Entity {
     }
 
     propsAreMissing() {
-        return Object.values(this).reduce((acc, cur)=>acc || cur === undefined, false);
+        if (Object.values(this).reduce((acc, cur)=>acc || cur === undefined, false)) {
+            this.validationResults.missingProps = true;
+            return true;
+        };
+
+        return false;
     }
 
     propFailsValidationRules() {
         for (const [prop, rules] of Object.entries(this.validation)) {
+            let i = 0;
             for (const rule of rules) {
                 if (!rule(this[prop])) {
+                    this.validationResults.failedRules[prop] = i;
                     return true;
                 }
+                i++;
             }
         }
         return false;
@@ -46,7 +58,10 @@ class Entity {
     
     validateInstance() {
         if (this.instanceIsInvalid()) {
-            throw new EntityValidationError(`${this.constructor.name} instance failed to validate with properties ${JSON.stringify(this.getEntityData())}`)
+            throw new EntityValidationError(
+                `${this.constructor.name} instance failed to validate. 
+                properties: ${JSON.stringify(this.getEntityData())} 
+                validationResults: ${JSON.stringify(this.validationResults)}`);
         }
     }
 }
@@ -170,6 +185,12 @@ async function createCounters() {
         },
         {
             key: datastore.key(["Counter", "Load"]),
+            data: {
+                "total": 0
+            }
+        },
+        {
+            key: datastore.key(["Counter", "User"]),
             data: {
                 "total": 0
             }
@@ -328,6 +349,18 @@ async function updateEntity(entity, modifications) {
     }
 }
 
+async function replaceEntity(entity, replacementData) {
+    const kind = entity[Datastore.KEY].kind;
+    const replacementEntity = createEntityInstance(kind, replacementData);
+    Object.assign(entity, replacementEntity.getEntityData());
+    try {
+        await datastore.save(entity);
+        return await getEntity(kind, entity[Datastore.KEY].id);
+    } catch (err) {
+        return handleError(err);
+    }
+}
+
 /**
  * Deletes the given entity from the database.
  * 
@@ -350,6 +383,7 @@ module.exports = {
     storeNewEntity,
     getAllEntities,
     updateEntity,
+    replaceEntity,
     deleteEntity,
     EntityValidationError,
     createCounters,
