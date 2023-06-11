@@ -49,10 +49,16 @@ function getEntityFromParams(kind) {
     const middlewareFn = async (req, res, next) => {
         const retrievedEntity = await db.getEntity(kind, req.params.id);
         if (!retrievedEntity) return res.status(404).json({"Error": `No ${kind.toLowerCase()} with this ${kind.toLowerCase()}_id exists.`});
-        req.retrievedEntities = [retrievedEntity];
+        req.retrievedEntities = retrievedEntity;
         next();
     }
     return middlewareFn;
+}
+
+function addSelfLinkToResponse(req, res, next) {
+    req.retrievedEntities["self"] = `${getFullBaseUrl(req)}/${req.retrievedEntities.id}`;
+    req.dataToSend = req.retrievedEntities;
+    return next();
 }
 
 /**
@@ -63,12 +69,10 @@ function getEntityFromParams(kind) {
  * @param {object} objToModify: the object where the self-link will be added
  * @returns {object} copy of object with added self property
  */
-function addSelfLinksToResponse(req, res, next) {
+function addSelfLinksToResponseList(req, res, next) {
     for (const retrievedEntity of req.retrievedEntities) {
         retrievedEntity.self = `${getFullBaseUrl(req)}/${retrievedEntity.id}`;
     }
-    
-    if (req.retrievedEntities.length === 1) return res.json(req.retrievedEntities[0]);
 
     return next();
 }
@@ -80,15 +84,20 @@ function getNextLink(req) {
 
 function addMetaData(req, res, next) {
     const nextLink = getNextLink(req);
-    res.json({
+    req.dataToSend = {
         count: req.retrievedMetaData.count,
         next: nextLink,
         data: req.retrievedEntities
-    });
+    }
+    return next();
+}
+
+function sendData(req, res) {
+    return res.json(req.dataToSend);
 }
 
 function assertCorrectOwner(req, res, next) {
-    const owner = req.retrievedEntities[0].user;
+    const owner = req.retrievedEntities.user;
     if (owner !== req.auth.sub) return res.status(403).json({"Error": "The authorized user does not have access to this boat."});
     return next();
 }
@@ -147,18 +156,18 @@ boats.route("/")
         console.log(cursor);
         res.status(200);
         return next();
-    }), addSelfLinksToResponse, addMetaData)
+    }), addSelfLinksToResponseList, addMetaData, sendData)
     .post(assertContentJson, assertAcceptJson, checkJwt, wrap(async (req, res, next) => {
         req.body.user = req.auth.sub;
         try {
             const newBoat = await db.storeNewEntity("Boat", req.body);
-            req.retrievedEntities = [newBoat];
+            req.retrievedEntities = newBoat;
             res.status(201);
             next();
         } catch (e) {
             next(e);
         }
-    }), addSelfLinksToResponse)
+    }), addSelfLinkToResponse, sendData)
     .all(methodNotAllowed);
 
     boats.route("/:id")
@@ -167,12 +176,12 @@ boats.route("/")
         // Passed all validation...
         res.status(200);
         next();
-    }), addSelfLinksToResponse)
+    }))
     .patch(assertAcceptJson, assertContentJson, wrap(async (req, res, next) => {
-        const [retrievedBoat] = req.retrievedEntities;
+        const retrievedBoat = req.retrievedEntities;
         try {
-            req.retrievedEntities = [await db.updateEntity(retrievedBoat, req.body)];
-            if (!req.retrievedEntities[0]) {
+            req.retrievedEntities = await db.updateEntity(retrievedBoat, req.body);
+            if (!req.retrievedEntities) {
                 return res.status(500).end();
             }
             res.status(200);
@@ -181,13 +190,13 @@ boats.route("/")
             return next(err);
         }
 
-    }), addSelfLinksToResponse)
+    }))
     .put(assertAcceptJson, assertContentJson, wrap(async (req, res, next) => {
         req.body.user = req.auth.sub;
-        const [retrievedBoat] = req.retrievedEntities;
+        const retrievedBoat = req.retrievedEntities;
         try {
-            req.retrievedEntities = [await db.replaceEntity(retrievedBoat, req.body)];
-            if (!req.retrievedEntities[0]) {
+            req.retrievedEntities = await db.replaceEntity(retrievedBoat, req.body);
+            if (!req.retrievedEntities) {
                 return res.status(500).end();
             }
             res.status(200);
@@ -195,14 +204,15 @@ boats.route("/")
         } catch (err) {
             return next(err);
         }
-    }), addSelfLinksToResponse)
+    }))
     .delete(wrap(async (req, res) => {
-        const boatToDelete = req.retrievedEntities[0];
+        const boatToDelete = req.retrievedEntities;
         if (! await db.deleteEntity(boatToDelete)) {
             return res.status(500).end();
         };
         return res.status(204).end();
-    }));
+    }))
+    .all(addSelfLinkToResponse, sendData);
 
 boats.use(handleValidationError);
 
