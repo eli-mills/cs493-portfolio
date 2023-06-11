@@ -25,9 +25,7 @@
 									"",
 									"validateResponse(newBoat);",
 									"pm.environment.set(\"boat1\", JSON.stringify(pm.response.json()))",
-									"",
-									"// Set environment variables",
-									"// pm.environment.set(\"boat_id\", pm.response.json()[\"id\"]);",
+									"pm.environment.set(\"boatId1\", pm.response.json()[\"id\"]);",
 									"// pm.environment.set(\"boat_name\", pm.response.json()[\"name\"]);",
 									"// pm.environment.set(\"boat_type\", pm.response.json()[\"type\"]);",
 									"// pm.environment.set(\"boat_length\", pm.response.json()[\"length\"]);",
@@ -143,9 +141,8 @@
 									"",
 									"validateResponse(newBoat, \"user2\");",
 									"pm.environment.set(\"boat2\", JSON.stringify(pm.response.json()));",
+									"pm.environment.set(\"boatId2\", pm.response.json()[\"id\"]);",
 									"",
-									"// Set environment variables",
-									"// pm.environment.set(\"boat2_id\", pm.response.json()[\"id\"]);",
 									"// pm.environment.set(\"boat2_name\", pm.response.json()[\"name\"]);",
 									"// pm.environment.set(\"boat2_type\", pm.response.json()[\"type\"]);",
 									"// pm.environment.set(\"boat2_length\", pm.response.json()[\"length\"]);"
@@ -853,18 +850,74 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "add boat3 (user1)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const newBoat = JSON.parse(pm.environment.get(\"boat3\"));",
+									"",
+									"pm.test(\"201 status code\", function () {",
+									"    //Check for 201 status code",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"validateResponse(newBoat);",
+									"pm.environment.set(\"boat3\", JSON.stringify(pm.response.json()))",
+									"pm.environment.set(\"boatId3\", pm.response.json()[\"id\"]);",
+									"// pm.environment.set(\"boat_name\", pm.response.json()[\"name\"]);",
+									"// pm.environment.set(\"boat_type\", pm.response.json()[\"type\"]);",
+									"// pm.environment.set(\"boat_length\", pm.response.json()[\"length\"]);",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const boat3 = {",
+									"    \"name\": \"Simon Says\",",
+									"    \"type\": \"Kayak\",",
+									"    \"length\": 14",
+									"}",
+									"",
+									"pm.environment.set(\"boat3\", JSON.stringify(boat3));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{{boat3}}\n"
+						},
+						"url": {
+							"raw": "{{app_url}}/boats",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats"
+							]
+						}
+					},
+					"response": []
 				}
 			],
-			"auth": {
-				"type": "bearer",
-				"bearer": [
-					{
-						"key": "token",
-						"value": "{{jwt1}}",
-						"type": "string"
-					}
-				]
-			},
 			"event": [
 				{
 					"listen": "prerequest",
@@ -880,28 +933,6 @@
 					"script": {
 						"type": "text/javascript",
 						"exec": [
-							"// Define utility functions",
-							"validateResponse = (expObject, user=\"user1\") => {",
-							"    pm.test(\"Response body is valid\", function () {",
-							"        // Check if the response content is valid and matches the expected values",
-							"        for (prop in expObject) {",
-							"            console.log(`Testing ${prop}: ${expObject[prop]}`);",
-							"            pm.expect(pm.response.json()[prop]).to.eq(expObject[prop]);",
-							"        }",
-							"",
-							"        // Check for boat ID",
-							"        pm.expect(pm.response.json()).to.have.own.property(\"id\");",
-							"",
-							"        // Check if the self url is correct",
-							"        const self_url = pm.environment.get(\"app_url\") + \"/boats/\" + pm.response.json()[\"id\"];",
-							"        pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
-							"",
-							"        // Check for expected user",
-							"        const expUser = pm.environment.get(user);",
-							"        pm.expect(pm.response.json()[\"user\"]).to.eq(expUser);",
-							"    });",
-							"",
-							"}",
 							""
 						]
 					}
@@ -929,17 +960,8 @@
 									"});",
 									"",
 									"",
-									"pm.test(\"content is valid\", function () {",
-									"    //Check if the content is valid",
-									"    pm.expect(Object.keys(pm.response.json()).length).to.eq(5);",
-									"    pm.expect(pm.response.json()[\"name\"]).to.eq(\"Sea Witch\");",
-									"    pm.expect(pm.response.json()[\"type\"]).to.eq(\"Catamaran\");",
-									"    pm.expect(pm.response.json()[\"length\"]).to.eq(28);",
-									"    pm.expect(pm.response.json()[\"id\"]).to.eq(pm.environment.get(\"boat_id\"));",
-									"    //Check if the self url is correct",
-									"       const self_url = pm.environment.get(\"app_url\") + \"/boats/\" + pm.response.json()[\"id\"];",
-									"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
-									"});",
+									"const boat = JSON.parse(pm.environment.get(\"boat1\"));",
+									"validateResponse(boat);",
 									""
 								],
 								"type": "text/javascript"
@@ -955,13 +977,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{app_url}}/boats/{{boat_id}}",
+							"raw": "{{app_url}}/boats/{{boatId1}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{boat_id}}"
+								"{{boatId1}}"
 							]
 						}
 					},
@@ -985,17 +1007,8 @@
 									"});",
 									"",
 									"",
-									"pm.test(\"content is valid\", function () {",
-									"    //Check if the content is valid",
-									"    pm.expect(Object.keys(pm.response.json()).length).to.eq(5);",
-									"    pm.expect(pm.response.json()[\"name\"]).to.eq(\"Sea Witch\");",
-									"    pm.expect(pm.response.json()[\"type\"]).to.eq(\"Catamaran\");",
-									"    pm.expect(pm.response.json()[\"length\"]).to.eq(28);",
-									"    pm.expect(pm.response.json()[\"id\"]).to.eq(pm.environment.get(\"boat_id\"));",
-									"    //Check if the self url is correct",
-									"       const self_url = pm.environment.get(\"app_url\") + \"/boats/\" + pm.response.json()[\"id\"];",
-									"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
-									"});",
+									"const boat = JSON.parse(pm.environment.get(\"boat1\"));",
+									"validateResponse(boat);",
 									""
 								],
 								"type": "text/javascript"
@@ -1012,20 +1025,20 @@
 							}
 						],
 						"url": {
-							"raw": "{{app_url}}/boats/{{boat_id}}",
+							"raw": "{{app_url}}/boats/{{boatId1}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{boat_id}}"
+								"{{boatId1}}"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "confirm boat 2 in database (boat with extra properties)",
+					"name": "get boat3",
 					"event": [
 						{
 							"listen": "test",
@@ -1042,17 +1055,8 @@
 									"});",
 									"",
 									"",
-									"pm.test(\"content is valid\", function () {",
-									"    //Check if the content is valid",
-									"    pm.expect(Object.keys(pm.response.json()).length).to.eq(5);",
-									"    pm.expect(pm.response.json()[\"name\"]).to.eq(\"Unsinkable II\");",
-									"    pm.expect(pm.response.json()[\"type\"]).to.eq(\"Yacht\");",
-									"    pm.expect(pm.response.json()[\"length\"]).to.eq(100);",
-									"    pm.expect(pm.response.json()[\"id\"]).to.eq(pm.environment.get(\"boat2_id\"));",
-									"    //Check if the self url is correct",
-									"       const self_url = pm.environment.get(\"app_url\") + \"/boats/\" + pm.response.json()[\"id\"];",
-									"   pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
-									"});",
+									"const boat = JSON.parse(pm.environment.get(\"boat3\"));",
+									"validateResponse(boat);",
 									""
 								],
 								"type": "text/javascript"
@@ -1069,65 +1073,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{app_url}}/boats/{{boat2_id}}",
+							"raw": "{{app_url}}/boats/{{boatId3}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{boat2_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "get boat HTML",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"200 status code\", function () {",
-									"    //Check for success 200 response code",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"// Check for Content-type header",
-									"pm.test(\"Content-type html\", () => {",
-									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.have.string(\"text/html\");",
-									"});",
-									"",
-									"",
-									"pm.test(\"content is valid\", function () {",
-									"    //Check if the content is valid",
-									"    const self_url = pm.environment.get(\"app_url\") + \"/boats/\" + pm.environment.get(\"boat_id\");",
-									"    pm.expect(pm.response.text()).to.eq(",
-									"    `<ul><li>name: Sea Witch</li><li>length: 28</li><li>type: Catamaran</li><li>id: ${pm.environment.get(\"boat_id\")}</li><li>self: ${self_url}</li></ul>`);",
-									"});",
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Accept",
-								"value": "text/html",
-								"type": "default"
-							}
-						],
-						"url": {
-							"raw": "{{app_url}}/boats/{{boat_id}}",
-							"host": [
-								"{{app_url}}"
-							],
-							"path": [
-								"boats",
-								"{{boat_id}}"
+								"{{boatId3}}"
 							]
 						}
 					},
@@ -1205,17 +1157,311 @@
 							}
 						],
 						"url": {
-							"raw": "{{app_url}}/boats/{{boat_id}}",
+							"raw": "{{app_url}}/boats/{{boatId1}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{boat_id}}"
+								"{{boatId1}}"
 							]
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "attempt to get another user's boat",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"403 forbidden\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"// Confirm error message",
+									"pm.test(\"Wrong owner error message\", () => {",
+									"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The authorized user does not have access to this boat.\");",
+									"});",
+									"",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId2}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId2}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "user2 get boat",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"200 status code\", function () {",
+									"    //Check for success 200 response code",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Check for Content-type header",
+									"pm.test(\"Content-type json\", () => {",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.have.string(\"application/json\");",
+									"});",
+									"",
+									"",
+									"const boat = JSON.parse(pm.environment.get(\"boat2\"));",
+									"validateResponse(boat, \"user2\");",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt2}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId2}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId2}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get all user1's boats",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code 200\", () => {",
+									"    pm.expect(pm.response).to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get all user2's boats",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code 200\", () => {",
+									"    pm.expect(pm.response).to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt2}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all boats expired token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"401 Unauthorized\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{expiredToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all boats missing token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"401 Unauthorized\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all boats invalid token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"401 Unauthorized\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{invalidToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
 				}
 			]
 		},
@@ -1234,30 +1480,11 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"// Verify response body",
-									"const selfUrl = `${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat_id\")}`;",
-									"pm.test(\"Response body contains update\", ()=>{",
-									"    pm.expect(Object.keys(pm.response.json()).length).to.eq(5);",
-									"    pm.expect(pm.response.json()[\"name\"]).to.eq(pm.environment.get(\"boat_name\"));",
-									"    pm.expect(pm.response.json()[\"id\"]).to.eq(pm.environment.get(\"boat_id\"));",
-									"    pm.expect(pm.response.json()[\"type\"]).to.eq(pm.environment.get(\"boat_type\"));",
-									"    pm.expect(pm.response.json()[\"length\"]).to.eq(pm.environment.get(\"boat_length\"));",
-									"    pm.expect(pm.response.json()[\"self\"]).to.eq(selfUrl);",
-									"});",
 									"",
-									"// Verify change in database",
-									"pm.sendRequest(`${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat_id\")}`, (err, res) => {",
-									"    pm.test(\"Entity is updated in database\", ()=>{",
-									"        pm.expect(err).to.be.null;",
-									"        pm.expect(res).to.have.property(\"code\", 200);",
-									"        pm.expect(Object.keys(res.json()).length).to.eq(5);",
-									"        pm.expect(res.json()).to.have.property(\"name\", pm.environment.get(\"boat_name\"));",
-									"        pm.expect(res.json()).to.have.property(\"id\", pm.environment.get(\"boat_id\"));",
-									"        pm.expect(res.json()).to.have.property(\"type\", pm.environment.get(\"boat_type\"));",
-									"        pm.expect(res.json()).to.have.property(\"length\", pm.environment.get(\"boat_length\"));",
-									"        pm.expect(res.json()).to.have.property(\"self\", selfUrl);",
-									"    });",
-									"});",
+									"// Verify response body",
+									"const expBoat = applyEdits(\"boat1\", \"boat1Patch\");",
+									"validateResponse(expBoat);",
+									"pm.environment.set(\"boat1\", JSON.stringify(expBoat));",
 									""
 								],
 								"type": "text/javascript"
@@ -1267,7 +1494,11 @@
 							"listen": "prerequest",
 							"script": {
 								"exec": [
-									"pm.environment.set(\"boat_name\", \"Crunchatize me, Capn!\");"
+									"const edits = {",
+									"    \"name\": \"Crunchatize me, Capn!\"",
+									"}",
+									"",
+									"pm.environment.set(\"boat1Patch\", JSON.stringify(edits));"
 								],
 								"type": "text/javascript"
 							}
@@ -1278,7 +1509,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"{{boat_name}}\"\n}",
+							"raw": "{{boat1Patch}}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1286,13 +1517,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{app_url}}/boats/{{boat_id}}",
+							"raw": "{{app_url}}/boats/{{boatId1}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{boat_id}}"
+								"{{boatId1}}"
 							]
 						}
 					},
@@ -1310,30 +1541,11 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"// Verify response body",
-									"const selfUrl = `${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat_id\")}`;",
-									"pm.test(\"Response body contains update\", ()=>{",
-									"    pm.expect(Object.keys(pm.response.json()).length).to.eq(5);",
-									"    pm.expect(pm.response.json()[\"name\"]).to.eq(pm.environment.get(\"boat_name\"));",
-									"    pm.expect(pm.response.json()[\"id\"]).to.eq(pm.environment.get(\"boat_id\"));",
-									"    pm.expect(pm.response.json()[\"type\"]).to.eq(pm.environment.get(\"boat_type\"));",
-									"    pm.expect(pm.response.json()[\"length\"]).to.eq(pm.environment.get(\"boat_length\"));",
-									"    pm.expect(pm.response.json()[\"self\"]).to.eq(selfUrl);",
-									"});",
 									"",
-									"// Verify change in database",
-									"pm.sendRequest(`${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat_id\")}`, (err, res) => {",
-									"    pm.test(\"Entity is updated in database\", ()=>{",
-									"        pm.expect(err).to.be.null;",
-									"        pm.expect(res).to.have.property(\"code\", 200);",
-									"        pm.expect(Object.keys(res.json()).length).to.eq(5);",
-									"        pm.expect(res.json()).to.have.property(\"name\", pm.environment.get(\"boat_name\"));",
-									"        pm.expect(res.json()).to.have.property(\"id\", pm.environment.get(\"boat_id\"));",
-									"        pm.expect(res.json()).to.have.property(\"type\", pm.environment.get(\"boat_type\"));",
-									"        pm.expect(res.json()).to.have.property(\"length\", pm.environment.get(\"boat_length\"));",
-									"        pm.expect(res.json()).to.have.property(\"self\", selfUrl);",
-									"    });",
-									"});",
+									"// Verify response body",
+									"const expBoat = applyEdits(\"boat1\", \"boat1Patch\");",
+									"validateResponse(expBoat);",
+									"pm.environment.set(\"boat1\", JSON.stringify(expBoat));",
 									""
 								],
 								"type": "text/javascript"
@@ -1343,8 +1555,12 @@
 							"listen": "prerequest",
 							"script": {
 								"exec": [
-									"pm.environment.set(\"boat_name\", \"Slippin Jimmy\");",
-									"pm.environment.set(\"boat_length\", 90);"
+									"const edits = {",
+									"    \"name\": \"Slippin Jimmy\",",
+									"    \"length\": 90",
+									"};",
+									"pm.environment.set(\"boat1Patch\", JSON.stringify(edits));",
+									""
 								],
 								"type": "text/javascript"
 							}
@@ -1355,7 +1571,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"{{boat_name}}\",\n    \"length\": {{boat_length}}\n}",
+							"raw": "{{boat1Patch}}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1363,13 +1579,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{app_url}}/boats/{{boat_id}}",
+							"raw": "{{app_url}}/boats/{{boatId1}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{boat_id}}"
+								"{{boatId1}}"
 							]
 						}
 					},
@@ -1387,30 +1603,11 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"// Verify response body",
-									"const selfUrl = `${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat_id\")}`;",
-									"pm.test(\"Response body contains update\", ()=>{",
-									"    pm.expect(Object.keys(pm.response.json()).length).to.eq(5);",
-									"    pm.expect(pm.response.json()[\"name\"]).to.eq(pm.environment.get(\"boat_name\"));",
-									"    pm.expect(pm.response.json()[\"id\"]).to.eq(pm.environment.get(\"boat_id\"));",
-									"    pm.expect(pm.response.json()[\"type\"]).to.eq(pm.environment.get(\"boat_type\"));",
-									"    pm.expect(pm.response.json()[\"length\"]).to.eq(pm.environment.get(\"boat_length\"));",
-									"    pm.expect(pm.response.json()[\"self\"]).to.eq(selfUrl);",
-									"});",
 									"",
-									"// Verify change in database",
-									"pm.sendRequest(`${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat_id\")}`, (err, res) => {",
-									"    pm.test(\"Entity is updated in database\", ()=>{",
-									"        pm.expect(err).to.be.null;",
-									"        pm.expect(res).to.have.property(\"code\", 200);",
-									"        pm.expect(Object.keys(res.json()).length).to.eq(5);",
-									"        pm.expect(res.json()).to.have.property(\"name\", pm.environment.get(\"boat_name\"));",
-									"        pm.expect(res.json()).to.have.property(\"id\", pm.environment.get(\"boat_id\"));",
-									"        pm.expect(res.json()).to.have.property(\"type\", pm.environment.get(\"boat_type\"));",
-									"        pm.expect(res.json()).to.have.property(\"length\", pm.environment.get(\"boat_length\"));",
-									"        pm.expect(res.json()).to.have.property(\"self\", selfUrl);",
-									"    });",
-									"});",
+									"// Verify response body",
+									"const expBoat = applyEdits(\"boat1\", \"boat1Patch\");",
+									"validateResponse(expBoat);",
+									"pm.environment.set(\"boat1\", JSON.stringify(expBoat));",
 									""
 								],
 								"type": "text/javascript"
@@ -1420,9 +1617,13 @@
 							"listen": "prerequest",
 							"script": {
 								"exec": [
-									"pm.environment.set(\"boat_name\", \"Ol' Bessie\");",
-									"pm.environment.set(\"boat_length\", 100);",
-									"pm.environment.set(\"boat_type\", \"Paddle boat\");"
+									"const edits = {",
+									"    \"name\": \"Ol' Bessie\",",
+									"    \"length\": 100,",
+									"    \"type\": \"Paddle boat\"",
+									"};",
+									"",
+									"pm.environment.set(\"boat1Patch\", JSON.stringify(edits));"
 								],
 								"type": "text/javascript"
 							}
@@ -1433,7 +1634,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"{{boat_name}}\",\n    \"length\": {{boat_length}},\n    \"type\": \"{{boat_type}}\"\n}",
+							"raw": "{{boat1Patch}}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1441,13 +1642,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{app_url}}/boats/{{boat_id}}",
+							"raw": "{{app_url}}/boats/{{boatId1}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{boat_id}}"
+								"{{boatId1}}"
 							]
 						}
 					},
@@ -1465,31 +1666,11 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"// Verify response body",
-									"const selfUrl = `${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat_id\")}`;",
-									"pm.test(\"Response body contains update\", ()=>{",
-									"    pm.expect(Object.keys(pm.response.json()).length).to.eq(5);",
-									"    pm.expect(pm.response.json()[\"name\"]).to.eq(pm.environment.get(\"boat_name\"));",
-									"    pm.expect(pm.response.json()[\"id\"]).to.eq(pm.environment.get(\"boat_id\"));",
-									"    pm.expect(pm.response.json()[\"type\"]).to.eq(pm.environment.get(\"boat_type\"));",
-									"    pm.expect(pm.response.json()[\"length\"]).to.eq(pm.environment.get(\"boat_length\"));",
-									"    pm.expect(pm.response.json()[\"self\"]).to.eq(selfUrl);",
-									"});",
 									"",
-									"// Verify change in database",
-									"pm.sendRequest(`${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat_id\")}`, (err, res) => {",
-									"    pm.test(\"Entity is updated in database\", ()=>{",
-									"        pm.expect(err).to.be.null;",
-									"        pm.expect(res).to.have.property(\"code\", 200);",
-									"        pm.expect(Object.keys(res.json()).length).to.eq(5);",
-									"        pm.expect(res.json()).to.have.property(\"name\", pm.environment.get(\"boat_name\"));",
-									"        pm.expect(res.json()).to.have.property(\"id\", pm.environment.get(\"boat_id\"));",
-									"        pm.expect(res.json()).to.have.property(\"type\", pm.environment.get(\"boat_type\"));",
-									"        pm.expect(res.json()).to.have.property(\"length\", pm.environment.get(\"boat_length\"));",
-									"        pm.expect(res.json()).to.have.property(\"self\", selfUrl);",
-									"    });",
-									"});",
-									""
+									"// Verify response body",
+									"const expBoat = applyEdits(\"boat1\", \"boat1Patch\");",
+									"validateResponse(expBoat);",
+									"pm.environment.set(\"boat1\", JSON.stringify(expBoat));"
 								],
 								"type": "text/javascript"
 							}
@@ -1498,8 +1679,13 @@
 							"listen": "prerequest",
 							"script": {
 								"exec": [
-									"pm.environment.set(\"boat_length\", 20);",
-									"pm.environment.set(\"boat_type\", \"Canoe\");"
+									"const boat1 = JSON.parse(pm.environment.get(\"boat1\"));",
+									"const edits = {",
+									"    \"name\": boat1.name,",
+									"    \"length\": 20,",
+									"    \"type\": \"Canoe\"",
+									"};",
+									"pm.environment.set(\"boat1Patch\", JSON.stringify(edits));"
 								],
 								"type": "text/javascript"
 							}
@@ -1510,7 +1696,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"{{boat_name}}\",\n    \"type\": \"{{boat_type}}\",\n    \"length\": {{boat_length}}\n}",
+							"raw": "{{boat1Patch}}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1518,13 +1704,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{app_url}}/boats/{{boat_id}}",
+							"raw": "{{app_url}}/boats/{{boatId1}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{boat_id}}"
+								"{{boatId1}}"
 							]
 						}
 					},
@@ -1542,31 +1728,11 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"// Verify response body",
-									"const selfUrl = `${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat_id\")}`;",
-									"pm.test(\"Response body contains update\", ()=>{",
-									"    pm.expect(Object.keys(pm.response.json()).length).to.eq(5);",
-									"    pm.expect(pm.response.json()[\"name\"]).to.eq(pm.environment.get(\"boat_name\"));",
-									"    pm.expect(pm.response.json()[\"id\"]).to.eq(pm.environment.get(\"boat_id\"));",
-									"    pm.expect(pm.response.json()[\"type\"]).to.eq(pm.environment.get(\"boat_type\"));",
-									"    pm.expect(pm.response.json()[\"length\"]).to.eq(pm.environment.get(\"boat_length\"));",
-									"    pm.expect(pm.response.json()[\"self\"]).to.eq(selfUrl);",
-									"});",
 									"",
-									"// Verify change in database",
-									"pm.sendRequest(`${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat_id\")}`, (err, res) => {",
-									"    pm.test(\"Entity is updated in database\", ()=>{",
-									"        pm.expect(err).to.be.null;",
-									"        pm.expect(res).to.have.property(\"code\", 200);",
-									"        pm.expect(Object.keys(res.json()).length).to.eq(5);",
-									"        pm.expect(res.json()).to.have.property(\"name\", pm.environment.get(\"boat_name\"));",
-									"        pm.expect(res.json()).to.have.property(\"id\", pm.environment.get(\"boat_id\"));",
-									"        pm.expect(res.json()).to.have.property(\"type\", pm.environment.get(\"boat_type\"));",
-									"        pm.expect(res.json()).to.have.property(\"length\", pm.environment.get(\"boat_length\"));",
-									"        pm.expect(res.json()).to.have.property(\"self\", selfUrl);",
-									"    });",
-									"});",
-									""
+									"// Verify response body",
+									"const expBoat = applyEdits(\"boat1\", \"boat1Patch\");",
+									"validateResponse(expBoat);",
+									"pm.environment.set(\"boat1\", JSON.stringify(expBoat));"
 								],
 								"type": "text/javascript"
 							}
@@ -1575,7 +1741,12 @@
 							"listen": "prerequest",
 							"script": {
 								"exec": [
-									"pm.environment.set(\"boat_type\", \"Jetski\");"
+									"const edits = {",
+									"    \"type\": \"Jetski\",",
+									"    \"id\": 1",
+									"}",
+									"",
+									"pm.environment.set(\"boat1Patch\", JSON.stringify(edits));"
 								],
 								"type": "text/javascript"
 							}
@@ -1586,7 +1757,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"type\": \"{{boat_type}}\",\n    \"id\": 1\n}",
+							"raw": "{{boat1Patch}}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1594,13 +1765,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{app_url}}/boats/{{boat_id}}",
+							"raw": "{{app_url}}/boats/{{boatId1}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{boat_id}}"
+								"{{boatId1}}"
 							]
 						}
 					},
@@ -1618,30 +1789,11 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"// Verify response body",
-									"const selfUrl = `${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat_id\")}`;",
-									"pm.test(\"Response body contains update\", ()=>{",
-									"    pm.expect(Object.keys(pm.response.json()).length).to.eq(5);",
-									"    pm.expect(pm.response.json()[\"name\"]).to.eq(pm.environment.get(\"boat_name\"));",
-									"    pm.expect(pm.response.json()[\"id\"]).to.eq(pm.environment.get(\"boat_id\"));",
-									"    pm.expect(pm.response.json()[\"type\"]).to.eq(pm.environment.get(\"boat_type\"));",
-									"    pm.expect(pm.response.json()[\"length\"]).to.eq(pm.environment.get(\"boat_length\"));",
-									"    pm.expect(pm.response.json()[\"self\"]).to.eq(selfUrl);",
-									"});",
 									"",
-									"// Verify change in database",
-									"pm.sendRequest(`${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat_id\")}`, (err, res) => {",
-									"    pm.test(\"Entity is updated in database\", ()=>{",
-									"        pm.expect(err).to.be.null;",
-									"        pm.expect(res).to.have.property(\"code\", 200);",
-									"        pm.expect(Object.keys(res.json()).length).to.eq(5);",
-									"        pm.expect(res.json()).to.have.property(\"name\", pm.environment.get(\"boat_name\"));",
-									"        pm.expect(res.json()).to.have.property(\"id\", pm.environment.get(\"boat_id\"));",
-									"        pm.expect(res.json()).to.have.property(\"type\", pm.environment.get(\"boat_type\"));",
-									"        pm.expect(res.json()).to.have.property(\"length\", pm.environment.get(\"boat_length\"));",
-									"        pm.expect(res.json()).to.have.property(\"self\", selfUrl);",
-									"    });",
-									"});",
+									"// Verify response body",
+									"const expBoat = JSON.parse(pm.environment.get(\"boat1\"));",
+									"validateResponse(expBoat);",
+									"pm.environment.set(\"boat1\", JSON.stringify(expBoat));",
 									""
 								],
 								"type": "text/javascript"
@@ -1670,13 +1822,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{app_url}}/boats/{{boat_id}}",
+							"raw": "{{app_url}}/boats/{{boatId1}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{boat_id}}"
+								"{{boatId1}}"
 							]
 						}
 					},
@@ -1694,99 +1846,11 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
+									"",
 									"// Verify response body",
-									"const selfUrl = `${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat_id\")}`;",
-									"pm.test(\"Response body contains update\", ()=>{",
-									"    pm.expect(Object.keys(pm.response.json()).length).to.eq(5);",
-									"    pm.expect(pm.response.json()[\"name\"]).to.eq(pm.environment.get(\"boat_name\"));",
-									"    pm.expect(pm.response.json()[\"id\"]).to.eq(pm.environment.get(\"boat_id\"));",
-									"    pm.expect(pm.response.json()[\"type\"]).to.eq(pm.environment.get(\"boat_type\"));",
-									"    pm.expect(pm.response.json()[\"length\"]).to.eq(pm.environment.get(\"boat_length\"));",
-									"    pm.expect(pm.response.json()[\"self\"]).to.eq(selfUrl);",
-									"});",
-									"",
-									"// Verify change in database",
-									"pm.sendRequest(`${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat_id\")}`, (err, res) => {",
-									"    pm.test(\"Entity is updated in database\", ()=>{",
-									"        pm.expect(err).to.be.null;",
-									"        pm.expect(res).to.have.property(\"code\", 200);",
-									"        pm.expect(Object.keys(res.json()).length).to.eq(5);",
-									"        pm.expect(res.json()).to.have.property(\"name\", pm.environment.get(\"boat_name\"));",
-									"        pm.expect(res.json()).to.have.property(\"id\", pm.environment.get(\"boat_id\"));",
-									"        pm.expect(res.json()).to.have.property(\"type\", pm.environment.get(\"boat_type\"));",
-									"        pm.expect(res.json()).to.have.property(\"length\", pm.environment.get(\"boat_length\"));",
-									"        pm.expect(res.json()).to.have.property(\"self\", selfUrl);",
-									"    });",
-									"});",
-									""
-								],
-								"type": "text/javascript"
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									"pm.environment.set(\"boat_name\", \"Ol' Reliable\");"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PATCH",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"{{boat_name}}\",\n    \"daysSinceLastIncident\": 1,\n    \"oshaRecordables\": 12\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{app_url}}/boats/{{boat_id}}",
-							"host": [
-								"{{app_url}}"
-							],
-							"path": [
-								"boats",
-								"{{boat_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "update boat to duplicate name",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"// Verify status code",
-									"pm.test(\"Status 403\", ()=>{",
-									"    pm.response.to.have.status(403);",
-									"});",
-									"",
-									"// Verify error description",
-									"pm.test(\"Error description\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The given name is not unique across all boats in the database.\"));",
-									"",
-									"// Verify no change in database",
-									"const selfUrl = `${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat_id\")}`;",
-									"pm.sendRequest(`${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat_id\")}`, (err, res) => {",
-									"    pm.test(\"Entity is unchanged in database\", ()=>{",
-									"        pm.expect(err).to.be.null;",
-									"        pm.expect(res).to.have.property(\"code\", 200);",
-									"        pm.expect(Object.keys(res.json()).length).to.eq(5);",
-									"        pm.expect(res.json()).to.have.property(\"name\", pm.environment.get(\"boat_name\"));",
-									"        pm.expect(res.json()).to.have.property(\"id\", pm.environment.get(\"boat_id\"));",
-									"        pm.expect(res.json()).to.have.property(\"type\", pm.environment.get(\"boat_type\"));",
-									"        pm.expect(res.json()).to.have.property(\"length\", pm.environment.get(\"boat_length\"));",
-									"        pm.expect(res.json()).to.have.property(\"self\", selfUrl);",
-									"    });",
-									"});",
+									"const expBoat = JSON.parse(pm.environment.get(\"boat1\"));",
+									"validateResponse(expBoat);",
+									"pm.environment.set(\"boat1\", JSON.stringify(expBoat));",
 									""
 								],
 								"type": "text/javascript"
@@ -1807,7 +1871,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"{{boat2_name}}\",\n    \"type\": \"i shouldn't update\",\n    \"length\": 1000\n}",
+							"raw": "{\n    \"daysSinceLastIncident\": 1,\n    \"oshaRecordables\": 12\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1815,13 +1879,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{app_url}}/boats/{{boat_id}}",
+							"raw": "{{app_url}}/boats/{{boatId1}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{boat_id}}"
+								"{{boatId1}}"
 							]
 						}
 					},
@@ -1840,22 +1904,7 @@
 									"});",
 									"",
 									"// Verify error description",
-									"pm.test(\"Error description\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are invalid.\"));",
-									"",
-									"// Verify no change in database",
-									"const selfUrl = `${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat_id\")}`;",
-									"pm.test(\"Entity is unchanged in database\", ()=>{",
-									"    pm.sendRequest(`${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat_id\")}`, (err, res) => {",
-									"        pm.expect(err).to.be.null;",
-									"        pm.expect(res).to.have.property(\"code\", 200);",
-									"        pm.expect(Object.keys(res.json()).length).to.eq(5);",
-									"        pm.expect(res.json()).to.have.property(\"name\", pm.environment.get(\"boat_name\"));",
-									"        pm.expect(res.json()).to.have.property(\"id\", pm.environment.get(\"boat_id\"));",
-									"        pm.expect(res.json()).to.have.property(\"type\", pm.environment.get(\"boat_type\"));",
-									"        pm.expect(res.json()).to.have.property(\"length\", pm.environment.get(\"boat_length\"));",
-									"        pm.expect(res.json()).to.have.property(\"self\", selfUrl);",
-									"    });",
-									"});",
+									"pm.test(\"Error description\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\"));",
 									""
 								],
 								"type": "text/javascript"
@@ -1884,13 +1933,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{app_url}}/boats/{{boat_id}}",
+							"raw": "{{app_url}}/boats/{{boatId1}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{boat_id}}"
+								"{{boatId1}}"
 							]
 						}
 					},
@@ -1909,22 +1958,7 @@
 									"});",
 									"",
 									"// Verify error description",
-									"pm.test(\"Error description\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are invalid.\"));",
-									"",
-									"// Verify no change in database",
-									"const selfUrl = `${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat_id\")}`;",
-									"pm.test(\"Entity is unchanged in database\", ()=>{",
-									"    pm.sendRequest(`${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat_id\")}`, (err, res) => {",
-									"        pm.expect(err).to.be.null;",
-									"        pm.expect(res).to.have.property(\"code\", 200);",
-									"        pm.expect(Object.keys(res.json()).length).to.eq(5);",
-									"        pm.expect(res.json()).to.have.property(\"name\", pm.environment.get(\"boat_name\"));",
-									"        pm.expect(res.json()).to.have.property(\"id\", pm.environment.get(\"boat_id\"));",
-									"        pm.expect(res.json()).to.have.property(\"type\", pm.environment.get(\"boat_type\"));",
-									"        pm.expect(res.json()).to.have.property(\"length\", pm.environment.get(\"boat_length\"));",
-									"        pm.expect(res.json()).to.have.property(\"self\", selfUrl);",
-									"    });",
-									"});",
+									"pm.test(\"Error description\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\"));",
 									""
 								],
 								"type": "text/javascript"
@@ -1953,13 +1987,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{app_url}}/boats/{{boat_id}}",
+							"raw": "{{app_url}}/boats/{{boatId1}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{boat_id}}"
+								"{{boatId1}}"
 							]
 						}
 					},
@@ -1978,22 +2012,7 @@
 									"});",
 									"",
 									"// Verify error description",
-									"pm.test(\"Error description\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are invalid.\"));",
-									"",
-									"// Verify no change in database",
-									"const selfUrl = `${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat_id\")}`;",
-									"pm.test(\"Entity is unchanged in database\", ()=>{",
-									"    pm.sendRequest(`${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat_id\")}`, (err, res) => {",
-									"        pm.expect(err).to.be.null;",
-									"        pm.expect(res).to.have.property(\"code\", 200);",
-									"        pm.expect(Object.keys(res.json()).length).to.eq(5);",
-									"        pm.expect(res.json()).to.have.property(\"name\", pm.environment.get(\"boat_name\"));",
-									"        pm.expect(res.json()).to.have.property(\"id\", pm.environment.get(\"boat_id\"));",
-									"        pm.expect(res.json()).to.have.property(\"type\", pm.environment.get(\"boat_type\"));",
-									"        pm.expect(res.json()).to.have.property(\"length\", pm.environment.get(\"boat_length\"));",
-									"        pm.expect(res.json()).to.have.property(\"self\", selfUrl);",
-									"    });",
-									"});",
+									"pm.test(\"Error description\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\"));",
 									""
 								],
 								"type": "text/javascript"
@@ -2022,13 +2041,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{app_url}}/boats/{{boat_id}}",
+							"raw": "{{app_url}}/boats/{{boatId1}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{boat_id}}"
+								"{{boatId1}}"
 							]
 						}
 					},
@@ -2077,6 +2096,54 @@
 					"response": []
 				},
 				{
+					"name": "attempt to update another user's boat",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"403 forbidden\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"// Confirm error message",
+									"pm.test(\"Wrong owner error message\", () => {",
+									"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The authorized user does not have access to this boat.\");",
+									"});",
+									"",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Silly Rabbit\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId2}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId2}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "update boat with unsupported Accept header",
 					"event": [
 						{
@@ -2112,13 +2179,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{app_url}}/boats/{{boat_id}}",
+							"raw": "{{app_url}}/boats/{{boatId1}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{boat_id}}"
+								"{{boatId1}}"
 							]
 						}
 					},
@@ -2149,13 +2216,91 @@
 							"raw": "{\"name\": \"please don't update\"}"
 						},
 						"url": {
-							"raw": "{{app_url}}/boats/{{boat_id}}",
+							"raw": "{{app_url}}/boats/{{boatId1}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{boat_id}}"
+								"{{boatId1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "verify boat1 unchanged after errant requests",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200\", ()=>pm.expect(pm.response).to.have.status(200));",
+									"",
+									"// Verify response body",
+									"const expBoat = JSON.parse(pm.environment.get(\"boat1\"));",
+									"validateResponse(expBoat);",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId1}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "verify boat2 unchanged after errant requests",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200\", ()=>pm.expect(pm.response).to.have.status(200));",
+									"",
+									"// Verify response body",
+									"const expBoat = JSON.parse(pm.environment.get(\"boat2\"));",
+									"validateResponse(expBoat, \"user2\");",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt2}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId2}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId2}}"
 							]
 						}
 					},
@@ -2174,27 +2319,14 @@
 							"script": {
 								"exec": [
 									"// Verify status code",
-									"pm.test(\"Status 303\", ()=>{",
-									"    pm.response.to.have.status(303);",
+									"pm.test(\"Status 200\", ()=>{",
+									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"// Verify Location header",
-									"const selfUrl = `${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat2_id\")}`;",
-									"pm.test(\"Location header\", ()=>pm.expect(pm.response.headers.get(\"Location\")).to.eq(selfUrl));",
-									"",
-									"// Verify change in database",
-									"pm.sendRequest(selfUrl, (err, res) => {",
-									"    pm.test(\"Entity is updated in database\", ()=>{",
-									"        pm.expect(err).to.be.null;",
-									"        pm.expect(res).to.have.property(\"code\", 200);",
-									"        pm.expect(Object.keys(res.json()).length).to.eq(5);",
-									"        pm.expect(res.json()).to.have.property(\"name\", pm.environment.get(\"boat2_name\"));",
-									"        pm.expect(res.json()).to.have.property(\"id\", pm.environment.get(\"boat2_id\"));",
-									"        pm.expect(res.json()).to.have.property(\"type\", pm.environment.get(\"boat2_type\"));",
-									"        pm.expect(res.json()).to.have.property(\"length\", pm.environment.get(\"boat2_length\"));",
-									"        pm.expect(res.json()).to.have.property(\"self\", selfUrl);",
-									"    });",
-									"});",
+									"// Verify response body",
+									"const expBoat = applyEdits(\"boat1\", \"boat1Patch\");",
+									"validateResponse(expBoat);",
+									"pm.environment.set(\"boat1\", JSON.stringify(expBoat));",
 									""
 								],
 								"type": "text/javascript"
@@ -2204,9 +2336,13 @@
 							"listen": "prerequest",
 							"script": {
 								"exec": [
-									"pm.environment.set(\"boat2_name\", \"Unsinkable III\");",
-									"pm.environment.set(\"boat2_type\", \"Fishing boat\");",
-									"pm.environment.set(\"boat2_length\", 10);"
+									"const edits = {",
+									"    \"name\": \"Unsinkable III\",",
+									"    \"type\": \"Fishing boat\",",
+									"    \"length\": 10",
+									"};",
+									"",
+									"pm.environment.set(\"boat1Patch\", JSON.stringify(edits));"
 								],
 								"type": "text/javascript"
 							}
@@ -2220,7 +2356,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"{{boat2_name}}\",\n    \"type\": \"{{boat2_type}}\",\n    \"length\": {{boat2_length}}\n}",
+							"raw": "{{boat1Patch}}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2228,13 +2364,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{app_url}}/boats/{{boat2_id}}",
+							"raw": "{{app_url}}/boats/{{boatId1}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{boat2_id}}"
+								"{{boatId1}}"
 							]
 						}
 					},
@@ -2248,27 +2384,14 @@
 							"script": {
 								"exec": [
 									"// Verify status code",
-									"pm.test(\"Status 303\", ()=>{",
-									"    pm.response.to.have.status(303);",
+									"pm.test(\"Status 200\", ()=>{",
+									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"// Verify Location header",
-									"const selfUrl = `${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat2_id\")}`;",
-									"pm.test(\"Location header\", ()=>pm.expect(pm.response.headers.get(\"Location\")).to.eq(selfUrl));",
-									"",
-									"// Verify change in database",
-									"pm.sendRequest(selfUrl, (err, res) => {",
-									"    pm.test(\"Entity is updated in database\", ()=>{",
-									"        pm.expect(err).to.be.null;",
-									"        pm.expect(res).to.have.property(\"code\", 200);",
-									"        pm.expect(Object.keys(res.json()).length).to.eq(5);",
-									"        pm.expect(res.json()).to.have.property(\"name\", pm.environment.get(\"boat2_name\"));",
-									"        pm.expect(res.json()).to.have.property(\"id\", pm.environment.get(\"boat2_id\"));",
-									"        pm.expect(res.json()).to.have.property(\"type\", pm.environment.get(\"boat2_type\"));",
-									"        pm.expect(res.json()).to.have.property(\"length\", pm.environment.get(\"boat2_length\"));",
-									"        pm.expect(res.json()).to.have.property(\"self\", selfUrl);",
-									"    });",
-									"});",
+									"// Verify response body",
+									"const expBoat = applyEdits(\"boat1\", \"boat1Patch\");",
+									"validateResponse(expBoat);",
+									"pm.environment.set(\"boat1\", JSON.stringify(expBoat));",
 									""
 								],
 								"type": "text/javascript"
@@ -2278,9 +2401,14 @@
 							"listen": "prerequest",
 							"script": {
 								"exec": [
-									"pm.environment.set(\"boat2_name\", \"Unsinkable IV\");",
-									"pm.environment.set(\"boat2_type\", \"Kayak\");",
-									"pm.environment.set(\"boat2_length\", 8);"
+									"const edits = {",
+									"    \"name\": \"Unsinkable IV\",",
+									"    \"type\": \"Kayak\",",
+									"    \"length\": 8,",
+									"    \"numberOfLifeboats\": 0",
+									"};",
+									"",
+									"pm.environment.set(\"boat1Patch\", JSON.stringify(edits));"
 								],
 								"type": "text/javascript"
 							}
@@ -2294,7 +2422,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"{{boat2_name}}\",\n    \"type\": \"{{boat2_type}}\",\n    \"length\": {{boat2_length}},\n    \"numberOfLifeRafts\": 0\n}",
+							"raw": "{{boat1Patch}}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2302,82 +2430,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{app_url}}/boats/{{boat2_id}}",
+							"raw": "{{app_url}}/boats/{{boatId1}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{boat2_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "update boat to duplicate name",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"// Verify status code",
-									"pm.test(\"Status 403\", ()=>{",
-									"    pm.response.to.have.status(403);",
-									"});",
-									"",
-									"// Verify error description",
-									"pm.test(\"Error description\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The given name is not unique across all boats in the database.\"));",
-									"",
-									"// Verify no change in database",
-									"const selfUrl = `${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat2_id\")}`;",
-									"pm.sendRequest(`${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat2_id\")}`, (err, res) => {",
-									"    pm.test(\"Entity is unchanged in database\", ()=>{",
-									"        pm.expect(err).to.be.null;",
-									"        pm.expect(res).to.have.property(\"code\", 200);",
-									"        pm.expect(Object.keys(res.json()).length).to.eq(5);",
-									"        pm.expect(res.json()).to.have.property(\"name\", pm.environment.get(\"boat2_name\"));",
-									"        pm.expect(res.json()).to.have.property(\"id\", pm.environment.get(\"boat2_id\"));",
-									"        pm.expect(res.json()).to.have.property(\"type\", pm.environment.get(\"boat2_type\"));",
-									"        pm.expect(res.json()).to.have.property(\"length\", pm.environment.get(\"boat2_length\"));",
-									"        pm.expect(res.json()).to.have.property(\"self\", selfUrl);",
-									"    });",
-									"});",
-									""
-								],
-								"type": "text/javascript"
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PUT",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"{{boat_name}}\",\n    \"type\": \"i shouldn't update\",\n    \"length\": 1000\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{app_url}}/boats/{{boat2_id}}",
-							"host": [
-								"{{app_url}}"
-							],
-							"path": [
-								"boats",
-								"{{boat2_id}}"
+								"{{boatId1}}"
 							]
 						}
 					},
@@ -2398,20 +2457,6 @@
 									"// Verify error description",
 									"pm.test(\"Error description\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\"));",
 									"",
-									"// Verify no change in database",
-									"const selfUrl = `${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat2_id\")}`;",
-									"pm.sendRequest(selfUrl, (err, res) => {",
-									"    pm.test(\"Entity is unchanged in database\", ()=>{",
-									"        pm.expect(err).to.be.null;",
-									"        pm.expect(res).to.have.property(\"code\", 200);",
-									"        pm.expect(Object.keys(res.json()).length).to.eq(5);",
-									"        pm.expect(res.json()).to.have.property(\"name\", pm.environment.get(\"boat2_name\"));",
-									"        pm.expect(res.json()).to.have.property(\"id\", pm.environment.get(\"boat2_id\"));",
-									"        pm.expect(res.json()).to.have.property(\"type\", pm.environment.get(\"boat2_type\"));",
-									"        pm.expect(res.json()).to.have.property(\"length\", pm.environment.get(\"boat2_length\"));",
-									"        pm.expect(res.json()).to.have.property(\"self\", selfUrl);",
-									"    });",
-									"});",
 									""
 								],
 								"type": "text/javascript"
@@ -2440,13 +2485,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{app_url}}/boats/{{boat2_id}}",
+							"raw": "{{app_url}}/boats/{{boatId1}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{boat2_id}}"
+								"{{boatId1}}"
 							]
 						}
 					},
@@ -2466,21 +2511,6 @@
 									"",
 									"// Verify error description",
 									"pm.test(\"Error description\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\"));",
-									"",
-									"// Verify no change in database",
-									"const selfUrl = `${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat2_id\")}`;",
-									"pm.sendRequest(selfUrl, (err, res) => {",
-									"    pm.test(\"Entity is unchanged in database\", ()=>{",
-									"        pm.expect(err).to.be.null;",
-									"        pm.expect(res).to.have.property(\"code\", 200);",
-									"        pm.expect(Object.keys(res.json()).length).to.eq(5);",
-									"        pm.expect(res.json()).to.have.property(\"name\", pm.environment.get(\"boat2_name\"));",
-									"        pm.expect(res.json()).to.have.property(\"id\", pm.environment.get(\"boat2_id\"));",
-									"        pm.expect(res.json()).to.have.property(\"type\", pm.environment.get(\"boat2_type\"));",
-									"        pm.expect(res.json()).to.have.property(\"length\", pm.environment.get(\"boat2_length\"));",
-									"        pm.expect(res.json()).to.have.property(\"self\", selfUrl);",
-									"    });",
-									"});",
 									""
 								],
 								"type": "text/javascript"
@@ -2509,13 +2539,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{app_url}}/boats/{{boat2_id}}",
+							"raw": "{{app_url}}/boats/{{boatId1}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{boat2_id}}"
+								"{{boatId1}}"
 							]
 						}
 					},
@@ -2535,21 +2565,6 @@
 									"",
 									"// Verify error description",
 									"pm.test(\"Error description\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\"));",
-									"",
-									"// Verify no change in database",
-									"const selfUrl = `${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat2_id\")}`;",
-									"pm.sendRequest(selfUrl, (err, res) => {",
-									"    pm.test(\"Entity is unchanged in database\", ()=>{",
-									"        pm.expect(err).to.be.null;",
-									"        pm.expect(res).to.have.property(\"code\", 200);",
-									"        pm.expect(Object.keys(res.json()).length).to.eq(5);",
-									"        pm.expect(res.json()).to.have.property(\"name\", pm.environment.get(\"boat2_name\"));",
-									"        pm.expect(res.json()).to.have.property(\"id\", pm.environment.get(\"boat2_id\"));",
-									"        pm.expect(res.json()).to.have.property(\"type\", pm.environment.get(\"boat2_type\"));",
-									"        pm.expect(res.json()).to.have.property(\"length\", pm.environment.get(\"boat2_length\"));",
-									"        pm.expect(res.json()).to.have.property(\"self\", selfUrl);",
-									"    });",
-									"});",
 									""
 								],
 								"type": "text/javascript"
@@ -2578,13 +2593,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{app_url}}/boats/{{boat2_id}}",
+							"raw": "{{app_url}}/boats/{{boatId1}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{boat2_id}}"
+								"{{boatId1}}"
 							]
 						}
 					},
@@ -2604,21 +2619,6 @@
 									"",
 									"// Verify error description",
 									"pm.test(\"Error description\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\"));",
-									"",
-									"// Verify no change in database",
-									"const selfUrl = `${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat2_id\")}`;",
-									"pm.sendRequest(selfUrl, (err, res) => {",
-									"    pm.test(\"Entity is unchanged in database\", ()=>{",
-									"        pm.expect(err).to.be.null;",
-									"        pm.expect(res).to.have.property(\"code\", 200);",
-									"        pm.expect(Object.keys(res.json()).length).to.eq(5);",
-									"        pm.expect(res.json()).to.have.property(\"name\", pm.environment.get(\"boat2_name\"));",
-									"        pm.expect(res.json()).to.have.property(\"id\", pm.environment.get(\"boat2_id\"));",
-									"        pm.expect(res.json()).to.have.property(\"type\", pm.environment.get(\"boat2_type\"));",
-									"        pm.expect(res.json()).to.have.property(\"length\", pm.environment.get(\"boat2_length\"));",
-									"        pm.expect(res.json()).to.have.property(\"self\", selfUrl);",
-									"    });",
-									"});",
 									""
 								],
 								"type": "text/javascript"
@@ -2647,13 +2647,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{app_url}}/boats/{{boat2_id}}",
+							"raw": "{{app_url}}/boats/{{boatId1}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{boat2_id}}"
+								"{{boatId1}}"
 							]
 						}
 					},
@@ -2673,21 +2673,6 @@
 									"",
 									"// Verify error description",
 									"pm.test(\"Error description\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\"));",
-									"",
-									"// Verify no change in database",
-									"const selfUrl = `${pm.environment.get(\"app_url\")}/boats/${pm.environment.get(\"boat2_id\")}`;",
-									"pm.sendRequest(selfUrl, (err, res) => {",
-									"    pm.test(\"Entity is unchanged in database\", ()=>{",
-									"        pm.expect(err).to.be.null;",
-									"        pm.expect(res).to.have.property(\"code\", 200);",
-									"        pm.expect(Object.keys(res.json()).length).to.eq(5);",
-									"        pm.expect(res.json()).to.have.property(\"name\", pm.environment.get(\"boat2_name\"));",
-									"        pm.expect(res.json()).to.have.property(\"id\", pm.environment.get(\"boat2_id\"));",
-									"        pm.expect(res.json()).to.have.property(\"type\", pm.environment.get(\"boat2_type\"));",
-									"        pm.expect(res.json()).to.have.property(\"length\", pm.environment.get(\"boat2_length\"));",
-									"        pm.expect(res.json()).to.have.property(\"self\", selfUrl);",
-									"    });",
-									"});",
 									""
 								],
 								"type": "text/javascript"
@@ -2716,13 +2701,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{app_url}}/boats/{{boat2_id}}",
+							"raw": "{{app_url}}/boats/{{boatId1}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{boat2_id}}"
+								"{{boatId1}}"
 							]
 						}
 					},
@@ -2771,6 +2756,54 @@
 					"response": []
 				},
 				{
+					"name": "attempt to update another user's boat",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"403 forbidden\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"// Confirm error message",
+									"pm.test(\"Wrong owner error message\", () => {",
+									"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The authorized user does not have access to this boat.\");",
+									"});",
+									"",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Silly Rabbit\",\n    \"type\": \"Motorboat\",\n    \"length\": 20\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId2}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId2}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "update boat with unsupported Accept header",
 					"event": [
 						{
@@ -2806,13 +2839,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{app_url}}/boats/{{boat2_id}}",
+							"raw": "{{app_url}}/boats/{{boatId1}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{boat2_id}}"
+								"{{boatId1}}"
 							]
 						}
 					},
@@ -2843,13 +2876,13 @@
 							"raw": "{\n    \"name\": \"please don't update\",\n    \"type\": \"also don't update\",\n    \"length\": 7\n}"
 						},
 						"url": {
-							"raw": "{{app_url}}/boats/{{boat2_id}}",
+							"raw": "{{app_url}}/boats/{{boatId1}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{boat2_id}}"
+								"{{boatId1}}"
 							]
 						}
 					},
@@ -2888,6 +2921,84 @@
 							],
 							"path": [
 								"boats"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "verify boat1 unchanged after errant requests",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200\", ()=>pm.expect(pm.response).to.have.status(200));",
+									"",
+									"// Verify response body",
+									"const expBoat = JSON.parse(pm.environment.get(\"boat1\"));",
+									"validateResponse(expBoat);",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId1}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "verify boat2 unchanged after errant requests",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200\", ()=>pm.expect(pm.response).to.have.status(200));",
+									"",
+									"// Verify response body",
+									"const expBoat = JSON.parse(pm.environment.get(\"boat2\"));",
+									"validateResponse(expBoat, \"user2\");",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt2}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId2}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId2}}"
 							]
 						}
 					},
@@ -3128,6 +3239,65 @@
 					"response": []
 				}
 			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{jwt1}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Define utility functions",
+					"validateResponse = (expObject, user=\"user1\") => {",
+					"    pm.test(\"Response body is valid\", function () {",
+					"        // Check if the response content is valid and matches the expected values",
+					"        for (prop in expObject) {",
+					"            console.log(`Testing ${prop}: ${expObject[prop]}`);",
+					"            pm.expect(pm.response.json()[prop]).to.eq(expObject[prop]);",
+					"        }",
+					"",
+					"        // Check for boat ID",
+					"        pm.expect(pm.response.json()).to.have.own.property(\"id\");",
+					"",
+					"        // Check if the self url is correct",
+					"        const self_url = pm.environment.get(\"app_url\") + \"/boats/\" + pm.response.json()[\"id\"];",
+					"        pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+					"",
+					"        // Check for expected user",
+					"        const expUser = pm.environment.get(user);",
+					"        pm.expect(pm.response.json()[\"user\"]).to.eq(expUser);",
+					"    });",
+					"",
+					"}",
+					"",
+					"applyEdits = (boatName, editName) => {",
+					"    const edits = JSON.parse(pm.environment.get(editName));",
+					"    const boat = JSON.parse(pm.environment.get(boatName));",
+					"    Object.keys(boat).forEach(key => key !== \"id\" && (boat[key] = edits[key] || boat[key]));",
+					"    return boat;",
+					"}",
+					""
+				]
+			}
 		}
 	]
 }
