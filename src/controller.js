@@ -86,7 +86,7 @@ function sendData(req, res) {
 
 function assertCorrectOwner(req, res, next) {
     const owner = req.retrievedEntities.user;
-    if (owner !== req.auth.sub) return res.status(403).json({"Error": "The authorized user does not have access to this boat."});
+    if (owner !== req.auth.sub) return res.status(403).json({"Error": "The authorized user does not have access to this endpoint."});
     return next();
 }
 

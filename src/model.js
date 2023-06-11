@@ -112,15 +112,17 @@ class Boat extends Entity{
 
 class Load extends Entity{
     static EDITABLE_PROPS = ["volume", "item", "creation_date"];
-    constructor({volume, item, creation_date, user}) {
+    constructor({volume, item, creation_date, user, carrier=null}) {
         super();
         this.volume = volume;
         this.item = item;
         this.creation_date = creation_date;
         this.user = user;
+        this.carrier = carrier;
         this.validation = {
             volume: [
                 vol => vol >= 1 && vol <= 9999,
+                vol => Number.isInteger(vol),
             ], 
             item: [
                 item => item.length >= 1 && item.length <= 50,
@@ -133,7 +135,13 @@ class Load extends Entity{
     }
 
     getEntityData() {
-        return {volume: this.volume, item: this.item, creation_date: this.creation_date, user: this.user}
+        return {
+            volume: this.volume, 
+            item: this.item, 
+            creation_date: this.creation_date, 
+            user: this.user,
+            carrier: this.carrier
+        }
     }
 
     getEntityKey(kind) {

@@ -1184,7 +1184,7 @@
 											"",
 											"// Verify error message",
 											"pm.test(\"Wrong owner error message\", () => {",
-											"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The authorized user does not have access to this boat.\");",
+											"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The authorized user does not have access to this endpoint.\");",
 											"});",
 											"",
 											"",
@@ -2251,7 +2251,7 @@
 											"",
 											"// Verify error message",
 											"pm.test(\"Wrong owner error message\", () => {",
-											"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The authorized user does not have access to this boat.\");",
+											"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The authorized user does not have access to this endpoint.\");",
 											"});",
 											"",
 											"",
@@ -3060,7 +3060,7 @@
 											"",
 											"// Verify error message",
 											"pm.test(\"Wrong owner error message\", () => {",
-											"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The authorized user does not have access to this boat.\");",
+											"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The authorized user does not have access to this endpoint.\");",
 											"});",
 											"",
 											"",
@@ -3398,6 +3398,51 @@
 								}
 							},
 							"response": []
+						},
+						{
+							"name": "200 verify boat2 unchanged after errant requests",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Verify status code",
+											"pm.test(\"Status 200\", ()=>pm.expect(pm.response).to.have.status(200));",
+											"",
+											"// Verify response body",
+											"const expBoat = JSON.parse(pm.environment.get(\"boat2\"));",
+											"validateResponse(expBoat, \"/boats/\", {user: \"user2\"});",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt2}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{app_url}}/boats/{{boatId2}}",
+									"host": [
+										"{{app_url}}"
+									],
+									"path": [
+										"boats",
+										"{{boatId2}}"
+									]
+								}
+							},
+							"response": []
 						}
 					]
 				},
@@ -3490,7 +3535,7 @@
 											"pm.test(\"Status 403\", ()=>pm.expect(pm.response).to.have.status(403));",
 											"",
 											"// Verify error message",
-											"pm.test(\"Error message\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The authorized user does not have access to this boat.\"));"
+											"pm.test(\"Error message\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The authorized user does not have access to this endpoint.\"));"
 										],
 										"type": "text/javascript"
 									}
@@ -3958,9 +4003,9 @@
 									"script": {
 										"exec": [
 											"const load1 = {",
-											"    \"name\": \"Sea Witch\",",
-											"    \"type\": \"Catamaran\",",
-											"    \"length\": 28",
+											"    \"volume\": 100,",
+											"    \"item\": \"bearings\",",
+											"    \"creation_date\": \"04/07/2005\"",
 											"}",
 											"",
 											"pm.environment.set(\"load1\", JSON.stringify(load1));"
@@ -4028,7 +4073,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"Sea Witch\",\n    \"type\": \"Catamaran\"\n}"
+									"raw": "{\n    \"volume\": 100,\n    \"item\": \"bearings\"\n}"
 								},
 								"url": {
 									"raw": "{{app_url}}/loads",
@@ -4056,7 +4101,7 @@
 											"",
 											"// Verify response body",
 											"const newload = JSON.parse(pm.environment.get(\"load2\"));",
-											"delete newload.numberOfLifeloads;",
+											"delete newload.nonsense;",
 											"validateResponse(newload, \"/loads/\", {user: \"user2\"});",
 											"",
 											"// Set environment variables",
@@ -4072,10 +4117,10 @@
 									"script": {
 										"exec": [
 											"const load2 = {",
-											"    \"name\": \"Unsinkable II\",",
-											"    \"type\": \"Yacht\",",
-											"    \"length\": 100,",
-											"    \"numberOfLifeloads\": 0",
+											"    \"volume\": 50,",
+											"    \"item\": \"ice cream cones\",",
+											"    \"creation_date\": \"04/21/2006\",",
+											"    \"nonsense\": 0",
 											"};",
 											"",
 											"pm.environment.set(\"load2\", JSON.stringify(load2));"
@@ -4129,7 +4174,56 @@
 							"response": []
 						},
 						{
-							"name": "400 add load with empty name",
+							"name": "400 add load with empty item",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Verify status code",
+											"pm.test(\"400 status invalid item\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"// Verify error message",
+											"pm.test(\"Invalid item error message\", () => {",
+											"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\");",
+											"});",
+											"",
+											"",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"volume\": 100,\n    \"item\": \"\",\n    \"creation_date\": \"04/07/2005\"\n}\n"
+								},
+								"url": {
+									"raw": "{{app_url}}/loads",
+									"host": [
+										"{{app_url}}"
+									],
+									"path": [
+										"loads"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "400 add load with item too long",
 							"event": [
 								{
 									"listen": "test",
@@ -4163,7 +4257,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"\",\n    \"type\": \"Catamaran\",\n    \"length\": 28\n}\n"
+									"raw": "{\n    \"volume\": 100,\n    \"item\": \"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890\",\n    \"creation_date\": \"04/07/2005\"\n}\n"
 								},
 								"url": {
 									"raw": "{{app_url}}/loads",
@@ -4178,56 +4272,7 @@
 							"response": []
 						},
 						{
-							"name": "400 add load with name too long",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"// Verify status code",
-											"pm.test(\"400 status invalid name\", function () {",
-											"    pm.response.to.have.status(400);",
-											"});",
-											"",
-											"// Verify error message",
-											"pm.test(\"Invalid name error message\", () => {",
-											"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\");",
-											"});",
-											"",
-											"",
-											""
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"type": "text",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"name\": \"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY\",\n    \"type\": \"Catamaran\",\n    \"length\": 28\n}\n"
-								},
-								"url": {
-									"raw": "{{app_url}}/loads",
-									"host": [
-										"{{app_url}}"
-									],
-									"path": [
-										"loads"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "400 add load with length too long",
+							"name": "400 add load with volume too big",
 							"event": [
 								{
 									"listen": "test",
@@ -4261,7 +4306,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"The Siren's Call\",\n    \"type\": \"Catamaran\",\n    \"length\": 10000\n}\n"
+									"raw": "{\n    \"volume\": 10000,\n    \"item\": \"bearings\",\n    \"creation_date\": \"04/07/2005\"\n}"
 								},
 								"url": {
 									"raw": "{{app_url}}/loads",
@@ -4276,7 +4321,7 @@
 							"response": []
 						},
 						{
-							"name": "400 add load with length too short",
+							"name": "400 add load with volume too small",
 							"event": [
 								{
 									"listen": "test",
@@ -4310,7 +4355,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"The Siren's Call\",\n    \"type\": \"Catamaran\",\n    \"length\": 0\n}\n"
+									"raw": "{\n    \"volume\": 0,\n    \"item\": \"bearings\",\n    \"creation_date\": \"04/07/2005\"\n}"
 								},
 								"url": {
 									"raw": "{{app_url}}/loads",
@@ -4325,7 +4370,7 @@
 							"response": []
 						},
 						{
-							"name": "400 add load with float length",
+							"name": "400 add load with float volume",
 							"event": [
 								{
 									"listen": "test",
@@ -4359,7 +4404,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"The Siren's Call\",\n    \"type\": \"Catamaran\",\n    \"length\": 15.2\n}\n"
+									"raw": "{\n    \"volume\": 100.52,\n    \"item\": \"bearings\",\n    \"creation_date\": \"04/07/2005\"\n}"
 								},
 								"url": {
 									"raw": "{{app_url}}/loads",
@@ -4374,7 +4419,7 @@
 							"response": []
 						},
 						{
-							"name": "400 add load with unparseable length",
+							"name": "400 add load with unparseable volume",
 							"event": [
 								{
 									"listen": "test",
@@ -4408,7 +4453,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"The Siren's Call\",\n    \"type\": \"Catamaran\",\n    \"length\": \"lol\"\n}\n"
+									"raw": "{\n    \"volume\": \"hey\",\n    \"item\": \"bearings\",\n    \"creation_date\": \"04/07/2005\"\n}"
 								},
 								"url": {
 									"raw": "{{app_url}}/loads",
@@ -4423,7 +4468,7 @@
 							"response": []
 						},
 						{
-							"name": "400 add load with type too short",
+							"name": "400 add load with bad creation date",
 							"event": [
 								{
 									"listen": "test",
@@ -4457,7 +4502,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"Ay-ay Capn\",\n    \"type\": \"\",\n    \"length\": 28\n}\n"
+									"raw": "{\n    \"volume\": 100,\n    \"item\": \"bearings\",\n    \"creation_date\": \"June 7, 2023\"\n}"
 								},
 								"url": {
 									"raw": "{{app_url}}/loads",
@@ -4472,7 +4517,7 @@
 							"response": []
 						},
 						{
-							"name": "400 add load with type too long",
+							"name": "400 add load with missing creation date",
 							"event": [
 								{
 									"listen": "test",
@@ -4506,7 +4551,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"Ahoy Matey\",\n    \"type\": \"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY\",\n    \"length\": 28\n}\n"
+									"raw": "{\n    \"volume\": 100,\n    \"item\": \"bearings\",\n    \"creation_date\": \"\"\n}"
 								},
 								"url": {
 									"raw": "{{app_url}}/loads",
@@ -4560,7 +4605,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"Crunchatize me, Capn!\",\n    \"type\": \"Spoon\",\n    \"length\": 28\n}\n"
+									"raw": "{\n    \"volume\": 100,\n    \"item\": \"bearings\",\n    \"creation_date\": \"04/07/2005\"\n}"
 								},
 								"url": {
 									"raw": "{{app_url}}/loads",
@@ -4614,7 +4659,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"Crunchatize me, Capn!\",\n    \"type\": \"Spoon\",\n    \"length\": 28\n}\n"
+									"raw": "{\n    \"volume\": 100,\n    \"item\": \"bearings\",\n    \"creation_date\": \"04/07/2005\"\n}"
 								},
 								"url": {
 									"raw": "{{app_url}}/loads",
@@ -4659,7 +4704,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"Mario\",\n    \"type\": \"Pipe\",\n    \"length\": 9\n}",
+									"raw": "{\n    \"volume\": 100,\n    \"item\": \"bearings\",\n    \"creation_date\": \"04/07/2005\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -4702,7 +4747,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"Mario\",\n    \"type\": \"Pipe\",\n    \"length\": 9\n}",
+									"raw": "{\n    \"volume\": 100,\n    \"item\": \"bearings\",\n    \"creation_date\": \"04/07/2005\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -4752,7 +4797,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"Mario\",\n    \"type\": \"Pipe\",\n    \"length\": 9,\n    \"public\": true\n}",
+									"raw": "{\n    \"volume\": 100,\n    \"item\": \"bearings\",\n    \"creation_date\": \"04/07/2005\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -4800,9 +4845,9 @@
 									"script": {
 										"exec": [
 											"const load3 = {",
-											"    \"name\": \"Simon Says\",",
-											"    \"type\": \"Kayak\",",
-											"    \"length\": 14",
+											"    \"volume\": 25,",
+											"    \"item\": \"toy drones\",",
+											"    \"creation_date\": \"12/24/2016\"",
 											"}",
 											"",
 											"pm.environment.set(\"load3\", JSON.stringify(load3));"
@@ -5101,7 +5146,7 @@
 											"",
 											"// Verify error message",
 											"pm.test(\"Wrong owner error message\", () => {",
-											"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The authorized user does not have access to this load.\");",
+											"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The authorized user does not have access to this endpoint.\");",
 											"});",
 											"",
 											"",
@@ -5521,7 +5566,7 @@
 					"name": "PATCH /loads",
 					"item": [
 						{
-							"name": "200 update load name",
+							"name": "200 update load item",
 							"event": [
 								{
 									"listen": "test",
@@ -5548,7 +5593,7 @@
 									"script": {
 										"exec": [
 											"const edits = {",
-											"    \"name\": \"Crunchatize me, Capn!\"",
+											"    \"item\": \"buckets\"",
 											"}",
 											"",
 											"pm.environment.set(\"load1Patch\", JSON.stringify(edits));"
@@ -5583,7 +5628,7 @@
 							"response": []
 						},
 						{
-							"name": "200 update load name and length",
+							"name": "200 update load item and volume",
 							"event": [
 								{
 									"listen": "test",
@@ -5610,8 +5655,8 @@
 									"script": {
 										"exec": [
 											"const edits = {",
-											"    \"name\": \"Slippin Jimmy\",",
-											"    \"length\": 90",
+											"    \"item\": \"drumsticks\",",
+											"    \"volume\": 90",
 											"};",
 											"pm.environment.set(\"load1Patch\", JSON.stringify(edits));",
 											""
@@ -5646,7 +5691,7 @@
 							"response": []
 						},
 						{
-							"name": "200 update load name, length, and type",
+							"name": "200 update load item, volume, and creation_date",
 							"event": [
 								{
 									"listen": "test",
@@ -5673,9 +5718,9 @@
 									"script": {
 										"exec": [
 											"const edits = {",
-											"    \"name\": \"Ol' Bessie\",",
-											"    \"length\": 100,",
-											"    \"type\": \"Paddle load\"",
+											"    \"item\": \"ovals\",",
+											"    \"volume\": 100,",
+											"    \"creation_date\": \"04/04/2004\"",
 											"};",
 											"",
 											"pm.environment.set(\"load1Patch\", JSON.stringify(edits));"
@@ -5710,7 +5755,7 @@
 							"response": []
 						},
 						{
-							"name": "200 update load to have same name",
+							"name": "200 update load to have same  item",
 							"event": [
 								{
 									"listen": "test",
@@ -5737,9 +5782,9 @@
 										"exec": [
 											"const load1 = JSON.parse(pm.environment.get(\"load1\"));",
 											"const edits = {",
-											"    \"name\": load1.name,",
-											"    \"length\": 20,",
-											"    \"type\": \"Canoe\"",
+											"    \"item\": load1.item,",
+											"    \"volume\": 20,",
+											"    \"creation_date\": \"01/01/2001\"",
 											"};",
 											"pm.environment.set(\"load1Patch\", JSON.stringify(edits));"
 										],
@@ -5799,7 +5844,7 @@
 									"script": {
 										"exec": [
 											"const edits = {",
-											"    \"type\": \"Jetski\",",
+											"    \"volume\": 80,",
 											"    \"id\": 1",
 											"}",
 											"",
@@ -5951,7 +5996,7 @@
 							"response": []
 						},
 						{
-							"name": "400 update load to invalid name",
+							"name": "400 update load to invalid item",
 							"event": [
 								{
 									"listen": "test",
@@ -5984,7 +6029,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"\"\n}",
+									"raw": "{\n    \"item\": \"\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -6005,7 +6050,7 @@
 							"response": []
 						},
 						{
-							"name": "400 update load to invalid length",
+							"name": "400 update load to invalid volume",
 							"event": [
 								{
 									"listen": "test",
@@ -6038,7 +6083,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"length\": -1\n}",
+									"raw": "{\n    \"volume\": -1\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -6059,7 +6104,7 @@
 							"response": []
 						},
 						{
-							"name": "400 update load to invalid type",
+							"name": "400 update load to invalid creation_date",
 							"event": [
 								{
 									"listen": "test",
@@ -6092,7 +6137,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"type\": \"\"\n}",
+									"raw": "{\n    \"creation_date\": \"01/01/01\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -6134,7 +6179,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\"name\": \"this shouldn't get saved\"}",
+									"raw": "{\"item\": \"this shouldn't get saved\"}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -6168,7 +6213,7 @@
 											"",
 											"// Verify error message",
 											"pm.test(\"Wrong owner error message\", () => {",
-											"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The authorized user does not have access to this load.\");",
+											"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The authorized user does not have access to this endpoint.\");",
 											"});",
 											"",
 											"",
@@ -6183,7 +6228,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"Silly Rabbit\"\n}",
+									"raw": "{\n    \"item\": \"hats\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -6231,7 +6276,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\"name\": \"Cobra Kai\"}",
+									"raw": "{\"item\": \"Cobra Kai\"}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -6273,7 +6318,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\"name\": \"please don't update\"}"
+									"raw": "{\"item\": \"please don't update\"}"
 								},
 								"url": {
 									"raw": "{{app_url}}/loads/{{loadId1}}",
@@ -6319,7 +6364,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"junk\"\n}",
+									"raw": "{\n    \"item\": \"junk\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -6363,7 +6408,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"junk\"\n}",
+									"raw": "{\n    \"item\": \"junk\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -6414,7 +6459,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"junk\"\n}",
+									"raw": "{\n    \"item\": \"junk\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -6545,9 +6590,9 @@
 									"script": {
 										"exec": [
 											"const edits = {",
-											"    \"name\": \"Unsinkable III\",",
-											"    \"type\": \"Fishing load\",",
-											"    \"length\": 10",
+											"    \"item\": \"fishing rods\",",
+											"    \"volume\": 30,",
+											"    \"creation_date\": \"06/07/2008\"",
 											"};",
 											"",
 											"pm.environment.set(\"load1Patch\", JSON.stringify(edits));"
@@ -6610,9 +6655,9 @@
 									"script": {
 										"exec": [
 											"const edits = {",
-											"    \"name\": \"Unsinkable IV\",",
-											"    \"type\": \"Kayak\",",
-											"    \"length\": 8,",
+											"    \"item\": \"Unsinkable IV\",",
+											"    \"creation_date\": \"04/05/2006\",",
+											"    \"volume\": 8,",
 											"    \"numberOfLifeloads\": 0",
 											"};",
 											"",
@@ -6685,7 +6730,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"hank\"\n}",
+									"raw": "{\n    \"item\": \"hank\",\n    \"junk1\": 23,\n    \"junk2\": 27\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -6760,7 +6805,7 @@
 							"response": []
 						},
 						{
-							"name": "400 update load with invalid name",
+							"name": "400 update load with invalid item",
 							"event": [
 								{
 									"listen": "test",
@@ -6793,7 +6838,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"\",\n    \"type\": \"Speedload\",\n    \"length\": 99\n}",
+									"raw": "{\n    \"item\": \"\",\n    \"creation_date\": \"01/07/1984\",\n    \"volume\": 99\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -6814,7 +6859,7 @@
 							"response": []
 						},
 						{
-							"name": "400 update load with invalid length",
+							"name": "400 update load with invalid volume",
 							"event": [
 								{
 									"listen": "test",
@@ -6847,7 +6892,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"hank\",\n    \"type\": \"speedload\",\n    \"length\": -100\n}",
+									"raw": "{\n    \"item\": \"hank\",\n    \"creation_date\": \"02/03/1994\",\n    \"volume\": -100\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -6868,7 +6913,7 @@
 							"response": []
 						},
 						{
-							"name": "400 update load with invalid type",
+							"name": "400 update load with invalid creation_date",
 							"event": [
 								{
 									"listen": "test",
@@ -6901,7 +6946,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"hank\",\n    \"type\": \"\",\n    \"length\": 99\n}",
+									"raw": "{\n    \"item\": \"hank\",\n    \"creation_date\": \"\",\n    \"volume\": 99\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -6943,7 +6988,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"this shouldn't get saved\",\n    \"type\": \"this also shouldn't get saved\",\n    \"length\": 100\n}",
+									"raw": "{\n    \"item\": \"this shouldn't get saved\",\n    \"creation_date\": \"01/02/2003\",\n    \"volume\": 100\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -6977,7 +7022,7 @@
 											"",
 											"// Verify error message",
 											"pm.test(\"Wrong owner error message\", () => {",
-											"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The authorized user does not have access to this load.\");",
+											"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The authorized user does not have access to this endpoint.\");",
 											"});",
 											"",
 											"",
@@ -6992,7 +7037,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"Silly Rabbit\",\n    \"type\": \"Motorload\",\n    \"length\": 20\n}",
+									"raw": "{\n    \"item\": \"Silly Rabbit\",\n    \"creation_date\": \"07/04/2004\",\n    \"volume\": 20\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -7040,7 +7085,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"Cobra Kai\",\n    \"type\": \"Aircraft carrier\",\n    \"length\": 1000\n}",
+									"raw": "{\n    \"item\": \"Silly Rabbit\",\n    \"creation_date\": \"07/04/2004\",\n    \"volume\": 20\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -7082,7 +7127,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"please don't update\",\n    \"type\": \"also don't update\",\n    \"length\": 7\n}"
+									"raw": "{\n    \"item\": \"Silly Rabbit\",\n    \"creation_date\": \"07/04/2004\",\n    \"volume\": 20\n}"
 								},
 								"url": {
 									"raw": "{{app_url}}/loads/{{loadId1}}",
@@ -7116,7 +7161,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"this doesn't mean anything\",\n    \"type\": \"this either\",\n    \"length\": 1000\n}",
+									"raw": "{\n    \"item\": \"Silly Rabbit\",\n    \"creation_date\": \"07/04/2004\",\n    \"volume\": 20\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -7166,7 +7211,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"a\",\n    \"type\": \"b\",\n    \"length\": 1\n}",
+									"raw": "{\n    \"item\": \"Silly Rabbit\",\n    \"creation_date\": \"07/04/2004\",\n    \"volume\": 20\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -7210,7 +7255,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"a\",\n    \"type\": \"b\",\n    \"length\": 1\n}",
+									"raw": "{\n    \"item\": \"Silly Rabbit\",\n    \"creation_date\": \"07/04/2004\",\n    \"volume\": 20\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -7261,7 +7306,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"a\",\n    \"type\": \"b\",\n    \"length\": 1\n}",
+									"raw": "{\n    \"item\": \"Silly Rabbit\",\n    \"creation_date\": \"07/04/2004\",\n    \"volume\": 20\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -7311,6 +7356,51 @@
 									"path": [
 										"loads",
 										"{{loadId1}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "200 verify load2 unchanged after errant requests",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Verify status code",
+											"pm.test(\"Status 200\", ()=>pm.expect(pm.response).to.have.status(200));",
+											"",
+											"// Verify response body",
+											"const expload = JSON.parse(pm.environment.get(\"load2\"));",
+											"validateResponse(expload, \"/loads/\", {user: \"user2\"});",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt2}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{app_url}}/loads/{{loadId2}}",
+									"host": [
+										"{{app_url}}"
+									],
+									"path": [
+										"loads",
+										"{{loadId2}}"
 									]
 								}
 							},
@@ -7407,7 +7497,7 @@
 											"pm.test(\"Status 403\", ()=>pm.expect(pm.response).to.have.status(403));",
 											"",
 											"// Verify error message",
-											"pm.test(\"Error message\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The authorized user does not have access to this load.\"));"
+											"pm.test(\"Error message\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The authorized user does not have access to this endpoint.\"));"
 										],
 										"type": "text/javascript"
 									}
@@ -7876,7 +7966,7 @@
 					"            pm.expect(actualObject[prop]).to.eq(expObject[prop]);",
 					"        }",
 					"",
-					"        // Check for boat ID",
+					"        // Check for ID",
 					"        pm.expect(actualObject).to.have.own.property(\"id\");",
 					"",
 					"        // Check if the self url is correct",
@@ -7886,6 +7976,9 @@
 					"        // Check for expected user",
 					"        const expUser = pm.environment.get(user);",
 					"        pm.expect(actualObject[\"user\"]).to.eq(expUser);",
+					"",
+					"        // If a load, check for carrier",
+					"        if (endpoint == \"/loads/\") pm.expect(actualObject[\"carrier\"]).to.be.null;",
 					"    });",
 					"",
 					"}",
