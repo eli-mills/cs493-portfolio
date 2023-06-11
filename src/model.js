@@ -204,7 +204,7 @@ async function getEntity(kind, entityId, isName=false) {
  * @param {string} kind
  * @returns list of objects, or error.
  */
-async function getAllEntities(kind, filter=null, startCursor=null) {
+async function getAllEntities(kind, filter=null, startCursor=undefined) {
     let query = datastore.createQuery(kind).limit(PAGE_SIZE);
     if (filter) {
         propFilter = new PropertyFilter(...filter);
@@ -214,7 +214,10 @@ async function getAllEntities(kind, filter=null, startCursor=null) {
     try {
         const [entities, info] = await datastore.runQuery(query);
         entities.forEach((entity) => entity.id = entity[Datastore.KEY].id);
-        return [entities, info.endCursor, await getCounterValue(kind)];
+        const endCursor = info.moreResults === Datastore.NO_MORE_RESULTS
+                          ? undefined 
+                          : info.endCursor;
+        return [entities, endCursor, await getCounterValue(kind)];
     } catch (err) {
         return handleError(err);
     }

@@ -41,11 +41,15 @@ const checkJwt = jwt({
 
 // CUSTOM MIDDLEWARE
 
+function getFullBaseUrl(req, id) {
+    return `${req.protocol}://${req.get("host")}${req.baseUrl}`;
+}
+
 function getEntityFromParams(kind) {
     const middlewareFn = async (req, res, next) => {
         const retrievedEntity = await db.getEntity(kind, req.params.id);
         if (!retrievedEntity) return res.status(404).json({"Error": `No ${kind.toLowerCase()} with this ${kind.toLowerCase()}_id exists.`});
-        req.retrievedEntity = retrievedEntity;
+        req.retrievedEntities = [retrievedEntity];
         next();
     }
     return middlewareFn;
@@ -59,29 +63,41 @@ function getEntityFromParams(kind) {
  * @param {object} objToModify: the object where the self-link will be added
  * @returns {object} copy of object with added self property
  */
-function addSelfLinkToResponse(req, res, next) {
-    const retrievedEntity = req.retrievedEntity;
-    if (!retrievedEntity) return next();
+function addSelfLinksToResponse(req, res, next) {
+    for (const retrievedEntity of req.retrievedEntities) {
+        retrievedEntity.self = `${getFullBaseUrl(req)}/${retrievedEntity.id}`;
+    }
+    
+    if (req.retrievedEntities.length === 1) return res.json(req.retrievedEntities[0]);
 
-    const selfLink = `${req.protocol}://${req.get("host")}${req.baseUrl}/${retrievedEntity.id}`;
-    retrievedEntity.self = selfLink;
-    res.json(retrievedEntity);
+    return next();
+}
+
+function getNextLink(req) {
+    const cursor = req.retrievedMetaData.cursor;
+    return cursor ? `${getFullBaseUrl(req)}?cursor=${cursor}` : undefined;
+}
+
+function addMetaData(req, res, next) {
+    const nextLink = getNextLink(req);
+    res.json({
+        count: req.retrievedMetaData.count,
+        next: nextLink,
+        data: req.retrievedEntities
+    });
 }
 
 function assertCorrectOwner(req, res, next) {
-    const retrievedEntity = req.retrievedEntity;
-    if (!retrievedEntity) return next();
-
-    const owner = retrievedEntity.user;
+    const owner = req.retrievedEntities[0].user;
     if (owner !== req.auth.sub) return res.status(403).json({"Error": "The authorized user does not have access to this boat."});
-    next();
+    return next();
 }
 
 function assertAcceptJson(req, res, next) {
     if (!req.accepts("json")) {
         return res.status(406).json({"Error": "Requested MIME type is not supported."});
     }
-    next();
+    return next();
 }
 
 function assertContentJson(req, res, next) {
@@ -121,21 +137,24 @@ authentication.get("/user-info", (req, res) => {
 boats.route("/")
     .get(checkJwt, wrap(async (req, res, next) => {
         // User is authenticated
-        const [usersBoats, cursor, count] = await db.getAllEntities("Boat", ["user", "=", req.auth.sub]);
+        const [usersBoats, cursor, count] = await db.getAllEntities("Boat", ["user", "=", req.auth.sub], req.query.cursor);
+        req.retrievedEntities = usersBoats;
         req.retrievedMetaData = {cursor, count};
-        res.status(200).json(usersBoats);
-    }))
+        console.log(cursor);
+        res.status(200);
+        return next();
+    }), addSelfLinksToResponse, addMetaData)
     .post(assertContentJson, assertAcceptJson, checkJwt, wrap(async (req, res, next) => {
         req.body.user = req.auth.sub;
         try {
             const newBoat = await db.createEntity("Boat", req.body);
-            req.retrievedEntity = newBoat;
+            req.retrievedEntities = [newBoat];
             res.status(201);
             next();
         } catch (e) {
             next(e);
         }
-    }));
+    }), addSelfLinksToResponse);
 
 boats.route("/:id")
     .all(getEntityFromParams("Boat"))
@@ -143,7 +162,7 @@ boats.route("/:id")
         // Passed all validation...
         res.status(200);
         next();
-    }))
+    }), addSelfLinksToResponse)
     .delete(checkJwt, async (req, res) => {
         const boatToDelete = await db.getEntity("Boat", req.params.boatId);
         if (!boatToDelete || boatToDelete.owner !== req.auth.sub) {
@@ -155,7 +174,6 @@ boats.route("/:id")
         res.status(204).end();
     });
 
-boats.use(addSelfLinkToResponse);
 boats.use(handleValidationError);
 
 // USERS
