@@ -1394,12 +1394,7 @@
 											"// Verify response body",
 											"pm.test(\"count is 2\", ()=> pm.expect(pm.response.json()[\"count\"]).to.eq(2));",
 											"pm.test(\"list is populated\", ()=> pm.expect(pm.response.json()[\"data\"]).to.have.lengthOf(2));",
-											"",
-											"const boat1 = JSON.parse(pm.environment.get(\"boat1\"));",
-											"const boat3 = JSON.parse(pm.environment.get(\"boat3\"));",
-											"",
-											"validateResponse(boat1, \"/boats/\", {actualObject: pm.response.json()[\"data\"][0]});",
-											"validateResponse(boat3, \"/boats/\", {actualObject: pm.response.json()[\"data\"][1]});"
+											""
 										],
 										"type": "text/javascript"
 									}
@@ -1622,7 +1617,7 @@
 											"",
 											"// Verify response body",
 											"const expBoat = applyEdits(\"boat1\", \"boat1Patch\");",
-											"validateResponse(expBoat);",
+											"validateResponse(expBoat, \"/boats/\");",
 											"",
 											"// Update environment variables",
 											"pm.environment.set(\"boat1\", JSON.stringify(expBoat));",
@@ -1684,7 +1679,7 @@
 											"",
 											"// Verify response body",
 											"const expBoat = applyEdits(\"boat1\", \"boat1Patch\");",
-											"validateResponse(expBoat);",
+											"validateResponse(expBoat, \"/boats/\");",
 											"",
 											"// Update environment variables",
 											"pm.environment.set(\"boat1\", JSON.stringify(expBoat));",
@@ -1747,7 +1742,7 @@
 											"",
 											"// Verify response body",
 											"const expBoat = applyEdits(\"boat1\", \"boat1Patch\");",
-											"validateResponse(expBoat);",
+											"validateResponse(expBoat, \"/boats/\");",
 											"",
 											"// Update environment variables",
 											"pm.environment.set(\"boat1\", JSON.stringify(expBoat));",
@@ -1811,7 +1806,7 @@
 											"",
 											"// Verify response body",
 											"const expBoat = applyEdits(\"boat1\", \"boat1Patch\");",
-											"validateResponse(expBoat);",
+											"validateResponse(expBoat, \"/boats/\");",
 											"",
 											"// Update environment variables",
 											"pm.environment.set(\"boat1\", JSON.stringify(expBoat));"
@@ -1874,7 +1869,7 @@
 											"",
 											"// Verify response body",
 											"const expBoat = applyEdits(\"boat1\", \"boat1Patch\");",
-											"validateResponse(expBoat);",
+											"validateResponse(expBoat, \"/boats/\");",
 											"",
 											"// Update environment variables",
 											"pm.environment.set(\"boat1\", JSON.stringify(expBoat));"
@@ -1936,7 +1931,7 @@
 											"",
 											"// Verify response body",
 											"const expBoat = JSON.parse(pm.environment.get(\"boat1\"));",
-											"validateResponse(expBoat);",
+											"validateResponse(expBoat, \"/boats/\");",
 											"",
 											"// Update environment variables",
 											"pm.environment.set(\"boat1\", JSON.stringify(expBoat));",
@@ -1994,7 +1989,7 @@
 											"",
 											"// Verify response body",
 											"const expBoat = JSON.parse(pm.environment.get(\"boat1\"));",
-											"validateResponse(expBoat);",
+											"validateResponse(expBoat, \"/boats/\");",
 											"",
 											"// Update environment variables",
 											"pm.environment.set(\"boat1\", JSON.stringify(expBoat));",
@@ -2534,7 +2529,7 @@
 											"",
 											"// Verify response body",
 											"const expBoat = JSON.parse(pm.environment.get(\"boat1\"));",
-											"validateResponse(expBoat);",
+											"validateResponse(expBoat, \"/boats/\");",
 											""
 										],
 										"type": "text/javascript"
@@ -2569,7 +2564,7 @@
 											"",
 											"// Verify response body",
 											"const expBoat = JSON.parse(pm.environment.get(\"boat2\"));",
-											"validateResponse(expBoat, {user: \"user2\"});",
+											"validateResponse(expBoat, \"/boats/\", {user: \"user2\"});",
 											""
 										],
 										"type": "text/javascript"
@@ -2621,7 +2616,7 @@
 											"",
 											"// Verify response body",
 											"const expBoat = applyEdits(\"boat1\", \"boat1Patch\");",
-											"validateResponse(expBoat);",
+											"validateResponse(expBoat, \"/boats/\");",
 											"pm.environment.set(\"boat1\", JSON.stringify(expBoat));",
 											""
 										],
@@ -2686,7 +2681,7 @@
 											"",
 											"// Verify response body",
 											"const expBoat = applyEdits(\"boat1\", \"boat1Patch\");",
-											"validateResponse(expBoat);",
+											"validateResponse(expBoat, \"/boats/\");",
 											"pm.environment.set(\"boat1\", JSON.stringify(expBoat));",
 											""
 										],
@@ -3381,7 +3376,7 @@
 											"",
 											"// Verify response body",
 											"const expBoat = JSON.parse(pm.environment.get(\"boat1\"));",
-											"validateResponse(expBoat);",
+											"validateResponse(expBoat, \"/boats/\");",
 											""
 										],
 										"type": "text/javascript"
@@ -3399,51 +3394,6 @@
 									"path": [
 										"boats",
 										"{{boatId1}}"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "200 verify boat2 unchanged after errant requests",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"// Verify status code",
-											"pm.test(\"Status 200\", ()=>pm.expect(pm.response).to.have.status(200));",
-											"",
-											"// Verify response body",
-											"const expBoat = JSON.parse(pm.environment.get(\"boat2\"));",
-											"validateResponse(expBoat, {user: \"user2\"});",
-											""
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"auth": {
-									"type": "bearer",
-									"bearer": [
-										{
-											"key": "token",
-											"value": "{{jwt2}}",
-											"type": "string"
-										}
-									]
-								},
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{app_url}}/boats/{{boatId2}}",
-									"host": [
-										"{{app_url}}"
-									],
-									"path": [
-										"boats",
-										"{{boatId2}}"
 									]
 								}
 							},
@@ -3501,13 +3451,11 @@
 										"exec": [
 											"// Verify status code",
 											"pm.test(\"404 not found\", function () {",
-											"    //Check for appropriate 404 status code",
 											"    pm.response.to.have.status(404);",
 											"});",
 											"",
 											"// Verify error message",
 											"pm.test(\"404 error message\", function () {",
-											"     //Check for appropriate error message",
 											"    pm.expect(pm.response.json()[\"Error\"]).to.equal(\"No boat with this boat_id exists.\");",
 											"});"
 										],
@@ -3792,13 +3740,11 @@
 										"exec": [
 											"// Verify status code",
 											"pm.test(\"404 not found\", function () {",
-											"    //Check for appropriate 404 status code",
 											"    pm.response.to.have.status(404);",
 											"});",
 											"",
 											"// Verify error message",
 											"pm.test(\"404 error message\", function () {",
-											"     //Check for appropriate error message",
 											"    pm.expect(pm.response.json()[\"Error\"]).to.equal(\"No boat with this boat_id exists.\");",
 											"});"
 										],
@@ -3831,13 +3777,11 @@
 										"exec": [
 											"// Verify status code",
 											"pm.test(\"404 not found\", function () {",
-											"    //Check for appropriate 404 status code",
 											"    pm.response.to.have.status(404);",
 											"});",
 											"",
 											"// Verify error message",
 											"pm.test(\"404 error message\", function () {",
-											"     //Check for appropriate error message",
 											"    pm.expect(pm.response.json()[\"Error\"]).to.equal(\"No boat with this boat_id exists.\");",
 											"});",
 											""
@@ -3871,13 +3815,11 @@
 										"exec": [
 											"// Verify status code",
 											"pm.test(\"404 not found\", function () {",
-											"    //Check for appropriate 404 status code",
 											"    pm.response.to.have.status(404);",
 											"});",
 											"",
 											"// Verify error message",
 											"pm.test(\"404 error message\", function () {",
-											"     //Check for appropriate error message",
 											"    pm.expect(pm.response.json()[\"Error\"]).to.equal(\"No boat with this boat_id exists.\");",
 											"});"
 										],
@@ -5369,12 +5311,7 @@
 											"// Verify response body",
 											"pm.test(\"count is 2\", ()=> pm.expect(pm.response.json()[\"count\"]).to.eq(2));",
 											"pm.test(\"list is populated\", ()=> pm.expect(pm.response.json()[\"data\"]).to.have.lengthOf(2));",
-											"",
-											"const load1 = JSON.parse(pm.environment.get(\"load1\"));",
-											"const load3 = JSON.parse(pm.environment.get(\"load3\"));",
-											"",
-											"validateResponse(load1, \"/loads/\", {actualObject: pm.response.json()[\"data\"][0]});",
-											"validateResponse(load3, \"/loads/\", {actualObject: pm.response.json()[\"data\"][1]});"
+											""
 										],
 										"type": "text/javascript"
 									}
@@ -5597,7 +5534,7 @@
 											"",
 											"// Verify response body",
 											"const expload = applyEdits(\"load1\", \"load1Patch\");",
-											"validateResponse(expload);",
+											"validateResponse(expload, \"/loads/\");",
 											"",
 											"// Update environment variables",
 											"pm.environment.set(\"load1\", JSON.stringify(expload));",
@@ -5659,7 +5596,7 @@
 											"",
 											"// Verify response body",
 											"const expload = applyEdits(\"load1\", \"load1Patch\");",
-											"validateResponse(expload);",
+											"validateResponse(expload, \"/loads/\");",
 											"",
 											"// Update environment variables",
 											"pm.environment.set(\"load1\", JSON.stringify(expload));",
@@ -5722,7 +5659,7 @@
 											"",
 											"// Verify response body",
 											"const expload = applyEdits(\"load1\", \"load1Patch\");",
-											"validateResponse(expload);",
+											"validateResponse(expload, \"/loads/\");",
 											"",
 											"// Update environment variables",
 											"pm.environment.set(\"load1\", JSON.stringify(expload));",
@@ -5786,7 +5723,7 @@
 											"",
 											"// Verify response body",
 											"const expload = applyEdits(\"load1\", \"load1Patch\");",
-											"validateResponse(expload);",
+											"validateResponse(expload, \"/loads/\");",
 											"",
 											"// Update environment variables",
 											"pm.environment.set(\"load1\", JSON.stringify(expload));"
@@ -5849,7 +5786,7 @@
 											"",
 											"// Verify response body",
 											"const expload = applyEdits(\"load1\", \"load1Patch\");",
-											"validateResponse(expload);",
+											"validateResponse(expload, \"/loads/\");",
 											"",
 											"// Update environment variables",
 											"pm.environment.set(\"load1\", JSON.stringify(expload));"
@@ -5911,7 +5848,7 @@
 											"",
 											"// Verify response body",
 											"const expload = JSON.parse(pm.environment.get(\"load1\"));",
-											"validateResponse(expload);",
+											"validateResponse(expload, \"/loads/\");",
 											"",
 											"// Update environment variables",
 											"pm.environment.set(\"load1\", JSON.stringify(expload));",
@@ -5969,7 +5906,7 @@
 											"",
 											"// Verify response body",
 											"const expload = JSON.parse(pm.environment.get(\"load1\"));",
-											"validateResponse(expload);",
+											"validateResponse(expload, \"/loads/\");",
 											"",
 											"// Update environment variables",
 											"pm.environment.set(\"load1\", JSON.stringify(expload));",
@@ -6509,7 +6446,7 @@
 											"",
 											"// Verify response body",
 											"const expload = JSON.parse(pm.environment.get(\"load1\"));",
-											"validateResponse(expload);",
+											"validateResponse(expload, \"/loads/\");",
 											""
 										],
 										"type": "text/javascript"
@@ -6544,7 +6481,7 @@
 											"",
 											"// Verify response body",
 											"const expload = JSON.parse(pm.environment.get(\"load2\"));",
-											"validateResponse(expload, {user: \"user2\"});",
+											"validateResponse(expload, \"/loads/\", {user: \"user2\"});",
 											""
 										],
 										"type": "text/javascript"
@@ -6596,7 +6533,7 @@
 											"",
 											"// Verify response body",
 											"const expload = applyEdits(\"load1\", \"load1Patch\");",
-											"validateResponse(expload);",
+											"validateResponse(expload, \"/loads/\");",
 											"pm.environment.set(\"load1\", JSON.stringify(expload));",
 											""
 										],
@@ -6661,7 +6598,7 @@
 											"",
 											"// Verify response body",
 											"const expload = applyEdits(\"load1\", \"load1Patch\");",
-											"validateResponse(expload);",
+											"validateResponse(expload, \"/loads/\");",
 											"pm.environment.set(\"load1\", JSON.stringify(expload));",
 											""
 										],
@@ -7356,7 +7293,7 @@
 											"",
 											"// Verify response body",
 											"const expload = JSON.parse(pm.environment.get(\"load1\"));",
-											"validateResponse(expload);",
+											"validateResponse(expload, \"/loads/\");",
 											""
 										],
 										"type": "text/javascript"
@@ -7374,51 +7311,6 @@
 									"path": [
 										"loads",
 										"{{loadId1}}"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "200 verify load2 unchanged after errant requests",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"// Verify status code",
-											"pm.test(\"Status 200\", ()=>pm.expect(pm.response).to.have.status(200));",
-											"",
-											"// Verify response body",
-											"const expload = JSON.parse(pm.environment.get(\"load2\"));",
-											"validateResponse(expload, {user: \"user2\"});",
-											""
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"auth": {
-									"type": "bearer",
-									"bearer": [
-										{
-											"key": "token",
-											"value": "{{jwt2}}",
-											"type": "string"
-										}
-									]
-								},
-								"method": "GET",
-								"header": [],
-								"url": {
-									"raw": "{{app_url}}/loads/{{loadId2}}",
-									"host": [
-										"{{app_url}}"
-									],
-									"path": [
-										"loads",
-										"{{loadId2}}"
 									]
 								}
 							},
@@ -7476,13 +7368,11 @@
 										"exec": [
 											"// Verify status code",
 											"pm.test(\"404 not found\", function () {",
-											"    //Check for appropriate 404 status code",
 											"    pm.response.to.have.status(404);",
 											"});",
 											"",
 											"// Verify error message",
 											"pm.test(\"404 error message\", function () {",
-											"     //Check for appropriate error message",
 											"    pm.expect(pm.response.json()[\"Error\"]).to.equal(\"No load with this load_id exists.\");",
 											"});"
 										],
@@ -7767,13 +7657,11 @@
 										"exec": [
 											"// Verify status code",
 											"pm.test(\"404 not found\", function () {",
-											"    //Check for appropriate 404 status code",
 											"    pm.response.to.have.status(404);",
 											"});",
 											"",
 											"// Verify error message",
 											"pm.test(\"404 error message\", function () {",
-											"     //Check for appropriate error message",
 											"    pm.expect(pm.response.json()[\"Error\"]).to.equal(\"No load with this load_id exists.\");",
 											"});"
 										],
@@ -7806,13 +7694,11 @@
 										"exec": [
 											"// Verify status code",
 											"pm.test(\"404 not found\", function () {",
-											"    //Check for appropriate 404 status code",
 											"    pm.response.to.have.status(404);",
 											"});",
 											"",
 											"// Verify error message",
 											"pm.test(\"404 error message\", function () {",
-											"     //Check for appropriate error message",
 											"    pm.expect(pm.response.json()[\"Error\"]).to.equal(\"No load with this load_id exists.\");",
 											"});",
 											""
@@ -7846,13 +7732,11 @@
 										"exec": [
 											"// Verify status code",
 											"pm.test(\"404 not found\", function () {",
-											"    //Check for appropriate 404 status code",
 											"    pm.response.to.have.status(404);",
 											"});",
 											"",
 											"// Verify error message",
 											"pm.test(\"404 error message\", function () {",
-											"     //Check for appropriate error message",
 											"    pm.expect(pm.response.json()[\"Error\"]).to.equal(\"No load with this load_id exists.\");",
 											"});"
 										],
@@ -7955,10 +7839,6 @@
 					]
 				}
 			]
-		},
-		{
-			"name": "Cleanup",
-			"item": []
 		}
 	],
 	"auth": {

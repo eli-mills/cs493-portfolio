@@ -14,11 +14,10 @@ const users = express.Router();
 
 /****************************************************************
  *                                                              *
- *                         MIDDLEWARE                           *
+ *                     LIBRARY MIDDLEWARE                       *
  *                                                              *
 ****************************************************************/
 
-// LIBRARY MIDDLEWARE
 const authMiddleware = auth({
     authRequired: false,
     auth0Logout: true,
@@ -39,7 +38,11 @@ const checkJwt = jwt({
     algorithms: ['RS256']
   });
 
-// CUSTOM MIDDLEWARE
+/****************************************************************
+ *                                                              *
+ *                  CUSTOM MIDDLEWARE - COMMON                  *
+ *                                                              *
+****************************************************************/
 
 function getFullBaseUrl(req, id) {
     return `${req.protocol}://${req.get("host")}${req.baseUrl}`;
@@ -128,6 +131,81 @@ function methodNotAllowed(req, res) {
 
 /****************************************************************
  *                                                              *
+ *              CUSTOM MIDDLEWARE - ROUTER MAINS                *
+ *                                                              *
+****************************************************************/
+
+// POST
+async function mwPostEntity(req, res, next) {
+    req.body.user = req.auth.sub;
+    try {
+        const newBoat = await db.storeNewEntity("Boat", req.body);
+        req.retrievedEntities = newBoat;
+        res.status(201);
+        return next();
+    } catch (e) {
+        return next(e);
+    }
+}
+
+// GET
+async function mwGetAllEntities(req, res, next) {
+    const [usersEntities, cursor, count] = await db.getAllEntities("Boat", req.auth.sub, req.query.cursor);
+    req.retrievedEntities = usersEntities;
+    req.retrievedMetaData = {cursor, count};
+
+    console.log(cursor);
+    res.status(200);
+    return next();
+}
+
+async function mwGetEntity (req, res, next) {
+    res.status(200);
+    return next();
+}
+
+// PATCH
+async function mwPatchEntity(req, res, next) {
+    const retrievedEntity = req.retrievedEntities;
+    try {
+        req.retrievedEntities = await db.updateEntity(retrievedEntity, req.body);
+        if (!req.retrievedEntities) {
+            return res.status(500).end();
+        }
+        res.status(200);
+        return next();
+    } catch (err) {
+        return next(err);
+    }
+}
+
+// PUT
+async function mwPutEntity (req, res, next) {
+    req.body.user = req.auth.sub;
+    const retrievedEntity = req.retrievedEntities;
+    try {
+        req.retrievedEntities = await db.replaceEntity(retrievedEntity, req.body);
+        if (!req.retrievedEntities) {
+            return res.status(500).end();
+        }
+        res.status(200);
+        return next();
+    } catch (err) {
+        return next(err);
+    }
+}
+
+// DELETE
+async function mwDeleteEntity(req, res) {
+    const entityToDelete = req.retrievedEntities;
+    if (! await db.deleteEntity(entityToDelete)) {
+        return res.status(500).end();
+    };
+    return res.status(204).end();
+}
+
+/****************************************************************
+ *                                                              *
  *                          ROUTERS                             *
  *                                                              *
 ****************************************************************/
@@ -148,70 +226,16 @@ authentication.get("/user-info", (req, res) => {
 
 // BOATS
 boats.route("/")
-    .get(checkJwt, wrap(async (req, res, next) => {
-        const [usersBoats, cursor, count] = await db.getAllEntities("Boat", req.auth.sub, req.query.cursor);
-        req.retrievedEntities = usersBoats;
-        req.retrievedMetaData = {cursor, count};
-
-        console.log(cursor);
-        res.status(200);
-        return next();
-    }), addSelfLinksToResponseList, addMetaData, sendData)
-    .post(assertContentJson, assertAcceptJson, checkJwt, wrap(async (req, res, next) => {
-        req.body.user = req.auth.sub;
-        try {
-            const newBoat = await db.storeNewEntity("Boat", req.body);
-            req.retrievedEntities = newBoat;
-            res.status(201);
-            next();
-        } catch (e) {
-            next(e);
-        }
-    }), addSelfLinkToResponse, sendData)
+    .get(checkJwt, wrap(mwGetAllEntities), addSelfLinksToResponseList, addMetaData, sendData)
+    .post(assertContentJson, assertAcceptJson, checkJwt, wrap(mwPostEntity), addSelfLinkToResponse, sendData)
     .all(methodNotAllowed);
 
-    boats.route("/:id")
+boats.route("/:id")
     .all(checkJwt, getEntityFromParams("Boat"), assertCorrectOwner)
-    .get(assertAcceptJson, wrap(async (req, res, next) => {
-        // Passed all validation...
-        res.status(200);
-        next();
-    }))
-    .patch(assertAcceptJson, assertContentJson, wrap(async (req, res, next) => {
-        const retrievedBoat = req.retrievedEntities;
-        try {
-            req.retrievedEntities = await db.updateEntity(retrievedBoat, req.body);
-            if (!req.retrievedEntities) {
-                return res.status(500).end();
-            }
-            res.status(200);
-            return next();
-        } catch (err) {
-            return next(err);
-        }
-
-    }))
-    .put(assertAcceptJson, assertContentJson, wrap(async (req, res, next) => {
-        req.body.user = req.auth.sub;
-        const retrievedBoat = req.retrievedEntities;
-        try {
-            req.retrievedEntities = await db.replaceEntity(retrievedBoat, req.body);
-            if (!req.retrievedEntities) {
-                return res.status(500).end();
-            }
-            res.status(200);
-            return next();
-        } catch (err) {
-            return next(err);
-        }
-    }))
-    .delete(wrap(async (req, res) => {
-        const boatToDelete = req.retrievedEntities;
-        if (! await db.deleteEntity(boatToDelete)) {
-            return res.status(500).end();
-        };
-        return res.status(204).end();
-    }))
+    .get(assertAcceptJson, wrap(mwGetEntity))
+    .patch(assertAcceptJson, assertContentJson, wrap(mwPatchEntity))
+    .put(assertAcceptJson, assertContentJson, wrap(mwPutEntity))
+    .delete(wrap(mwDeleteEntity))
     .all(addSelfLinkToResponse, sendData);
 
 boats.use(handleValidationError);
