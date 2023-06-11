@@ -55,6 +55,7 @@ class Entity {
  * Defines data structure to use when creating a new boat.
  */
 class Boat extends Entity{
+    static EDITABLE_PROPS = ["name", "type", "length"];
     /**
      * 
      * @param {string} name 
@@ -95,6 +96,7 @@ class Boat extends Entity{
 }
 
 class Load extends Entity{
+    static EDITABLE_PROPS = ["volume", "item", "creation_date"];
     constructor({volume, item, creation_date, user}) {
         super();
         this.volume = volume;
@@ -143,13 +145,98 @@ class User extends Entity {
 
 /****************************************************************
  *                                                              *
- *                      DATABASE FUNCTIONS                      *
+ *                       UTILITY FUNCTIONS                      *
  *                                                              *
  ****************************************************************/
 
 function handleError(err) {
     console.error(err);
     return false;
+}
+
+/****************************************************************
+ *                                                              *
+ *                           COUNTERS                           *
+ *                                                              *
+ ****************************************************************/
+
+async function createCounters() {
+    const counters = [
+        {
+            key: datastore.key(["Counter", "Boat"]),
+            data: {
+                "total": 0
+            }
+        },
+        {
+            key: datastore.key(["Counter", "Load"]),
+            data: {
+                "total": 0
+            }
+        }
+    ];
+    const query = datastore.createQuery("Counter");
+    const [listOfCounters] = await datastore.runQuery(query);
+    if (! listOfCounters.length) {
+        await datastore.save(counters);
+    }
+}
+
+async function getCounter(kind) {
+    const counterKey = datastore.key(["Counter", kind]);
+    const transaction = datastore.transaction();
+    try {
+        await transaction.run();
+        let [counter] = await transaction.get(counterKey);
+        return [counter, transaction]
+    } catch (err) {
+        console.log("error in getCounter");
+        await transaction.rollback();
+        return handleError(err);
+    }
+}
+
+async function getCounterValue(kind, user) {
+    try {
+        const [counter, transaction] = await getCounter(kind);
+        await transaction.rollback();
+        return counter[user] || counter.total;
+    } catch (err) {
+        await transaction.rollback();
+        return handleError(err);
+    }
+}
+
+async function addCounter(kind, user, valueToAdd) {
+    const [counter, transaction] = await getCounter(kind);
+    try {
+        counter.total = Math.max(0, counter.total + valueToAdd);
+        if (user) {
+            const userCount = counter[user] || 0;
+            counter[user] = Math.max(0, userCount + valueToAdd);
+        }
+        transaction.save({key: datastore.key(["Counter", kind]), data: counter});
+        await transaction.commit();
+    } catch (err) {
+        console.log("error in addCounter");
+        await transaction.rollback();
+        return handleError(err);
+    }
+}
+
+/****************************************************************
+ *                                                              *
+ *                    DATA MODEL FUNCTIONS                      *
+ *                                                              *
+ ****************************************************************/
+
+function createEntityInstance(kind, entityData) {
+    const newInstance = {
+        "Boat": () => {return new Boat(entityData)},
+        "Load": () => {return new Load(entityData)},
+        "User": () => {return new User(entityData)},
+    }[kind]();
+    return newInstance;
 }
 
 /**
@@ -159,12 +246,8 @@ function handleError(err) {
  * 
  * @returns new entity, or false if error.
  */
-async function createEntity(kind, entityData) {
-    const newInstance = {
-        "Boat": () => {return new Boat(entityData)},
-        "Load": () => {return new Load(entityData)},
-        "User": () => {return new User(entityData)},
-    }[kind]();
+async function storeNewEntity(kind, entityData) {
+    const newInstance = createEntityInstance(kind, entityData);
     const newEntity = {
         key: newInstance.getEntityKey(kind),
         data: newInstance.getEntityData()
@@ -229,10 +312,17 @@ async function getAllEntities(kind, user=undefined, startCursor=undefined) {
  * @param {object} entity: previously retrieved from datastore (has KEY Symbol)
  * @returns true if successful, false if error
  */
-async function updateEntity(entity) {
+async function updateEntity(entity, modifications) {
+    const kind = entity[Datastore.KEY]["kind"];
+    Object.keys(entity).forEach(prop => prop in modifications && (entity[prop] = modifications[prop]));
+    delete entity.id;   // Remove id property generated from getEntity
+    
+    // Validate data
+    createEntityInstance(kind, entity);
+    console.log(JSON.stringify(entity));
     try {
         await datastore.save(entity);
-        return true;
+        return await getEntity(kind, entity[Datastore.KEY].id);
     } catch (err) {
         return handleError(err);
     }
@@ -255,74 +345,9 @@ async function deleteEntity(entity) {
     }
 }
 
-async function createCounters() {
-    const counters = [
-        {
-            key: datastore.key(["Counter", "Boat"]),
-            data: {
-                "total": 0
-            }
-        },
-        {
-            key: datastore.key(["Counter", "Load"]),
-            data: {
-                "total": 0
-            }
-        }
-    ];
-    const query = datastore.createQuery("Counter");
-    const [listOfCounters] = await datastore.runQuery(query);
-    if (! listOfCounters.length) {
-        await datastore.save(counters);
-    }
-}
-
-
-async function getCounter(kind) {
-    const counterKey = datastore.key(["Counter", kind]);
-    const transaction = datastore.transaction();
-    try {
-        await transaction.run();
-        let [counter] = await transaction.get(counterKey);
-        return [counter, transaction]
-    } catch (err) {
-        console.log("error in getCounter");
-        await transaction.rollback();
-        return handleError(err);
-    }
-}
-
-async function getCounterValue(kind, user) {
-    try {
-        const [counter, transaction] = await getCounter(kind);
-        await transaction.rollback();
-        return counter[user] || counter.total;
-    } catch (err) {
-        await transaction.rollback();
-        return handleError(err);
-    }
-}
-
-async function addCounter(kind, user, valueToAdd) {
-    const [counter, transaction] = await getCounter(kind);
-    try {
-        counter.total = Math.max(0, counter.total + valueToAdd);
-        if (user) {
-            const userCount = counter[user] || 0;
-            counter[user] = Math.max(0, userCount + valueToAdd);
-        }
-        transaction.save({key: datastore.key(["Counter", kind]), data: counter});
-        await transaction.commit();
-    } catch (err) {
-        console.log("error in addCounter");
-        await transaction.rollback();
-        return handleError(err);
-    }
-}
-
 module.exports = {
     getEntity,
-    createEntity,
+    storeNewEntity,
     getAllEntities,
     updateEntity,
     deleteEntity,

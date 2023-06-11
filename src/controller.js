@@ -113,6 +113,10 @@ function handleValidationError(err, req, res, next) {
     res.status(400).json({"Error": "One or more of the request attributes are missing or invalid."});
 }
 
+function methodNotAllowed(req, res) {
+    return res.status(405).end();
+}
+
 /****************************************************************
  *                                                              *
  *                          ROUTERS                             *
@@ -126,7 +130,7 @@ authentication.get("/", wrap(async (req, res, next) => {
         return next();         // Use Express static middleware to display login page.
     }
     const decoded = jwt_decode(req.oidc.idToken);
-    await db.createEntity("User", {sub: decoded.sub});
+    await db.storeNewEntity("User", {sub: decoded.sub});
     res.status(303).redirect("/user-info");
 }));
 authentication.get("/user-info", (req, res) => {
@@ -136,10 +140,10 @@ authentication.get("/user-info", (req, res) => {
 // BOATS
 boats.route("/")
     .get(checkJwt, wrap(async (req, res, next) => {
-        // User is authenticated
         const [usersBoats, cursor, count] = await db.getAllEntities("Boat", req.auth.sub, req.query.cursor);
         req.retrievedEntities = usersBoats;
         req.retrievedMetaData = {cursor, count};
+
         console.log(cursor);
         res.status(200);
         return next();
@@ -147,21 +151,37 @@ boats.route("/")
     .post(assertContentJson, assertAcceptJson, checkJwt, wrap(async (req, res, next) => {
         req.body.user = req.auth.sub;
         try {
-            const newBoat = await db.createEntity("Boat", req.body);
+            const newBoat = await db.storeNewEntity("Boat", req.body);
             req.retrievedEntities = [newBoat];
             res.status(201);
             next();
         } catch (e) {
             next(e);
         }
-    }), addSelfLinksToResponse);
+    }), addSelfLinksToResponse)
+    .all(methodNotAllowed);
 
-boats.route("/:id")
+    boats.route("/:id")
     .all(getEntityFromParams("Boat"))
     .get(checkJwt, assertAcceptJson, assertCorrectOwner, wrap(async (req, res, next) => {
         // Passed all validation...
         res.status(200);
         next();
+    }), addSelfLinksToResponse)
+    .patch(checkJwt, assertAcceptJson, assertContentJson, wrap(async (req, res, next) => {
+        const [retrievedBoat] = req.retrievedEntities;
+        try {
+            req.retrievedEntities = [await db.updateEntity(retrievedBoat, req.body)];
+            if (!req.retrievedEntities[0]) {
+                return res.status(500).end();
+            }
+            res.status(200);
+            return next();
+        } catch (err) {
+            console.log("caught error in patch");
+            return next(err);
+        }
+
     }), addSelfLinksToResponse)
     .delete(checkJwt, async (req, res) => {
         const boatToDelete = await db.getEntity("Boat", req.params.boatId);
