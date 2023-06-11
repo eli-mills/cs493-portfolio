@@ -10,25 +10,24 @@
 			"name": "POST /boats",
 			"item": [
 				{
-					"name": "add boat1 (user1)",
+					"name": "201 add boat1 (user1)",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"const newBoat = JSON.parse(pm.environment.get(\"boat1\"));",
-									"",
+									"// Verify status code",
 									"pm.test(\"201 status code\", function () {",
-									"    //Check for 201 status code",
 									"    pm.response.to.have.status(201);",
 									"});",
 									"",
-									"validateResponse(newBoat);",
+									"// Verify response body",
+									"const newBoat = JSON.parse(pm.environment.get(\"boat1\"));",
+									"validateResponse(newBoat, \"/boats/\");",
+									"",
+									"// Set enironment variables",
 									"pm.environment.set(\"boat1\", JSON.stringify(pm.response.json()))",
 									"pm.environment.set(\"boatId1\", pm.response.json()[\"id\"]);",
-									"// pm.environment.set(\"boat_name\", pm.response.json()[\"name\"]);",
-									"// pm.environment.set(\"boat_type\", pm.response.json()[\"type\"]);",
-									"// pm.environment.set(\"boat_length\", pm.response.json()[\"length\"]);",
 									""
 								],
 								"type": "text/javascript"
@@ -76,19 +75,19 @@
 					"response": []
 				},
 				{
-					"name": "add boat with missing attributes",
+					"name": "400 add boat with missing attributes",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"400 status code\", function () {",
-									"    //Check for 400 status code",
 									"    pm.response.to.have.status(400);",
 									"});",
 									"",
+									"// Verify error message",
 									"pm.test(\"400 error message\", function () {",
-									"     //Check for appropriate error message",
 									"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\");",
 									"});",
 									"",
@@ -124,28 +123,26 @@
 					"response": []
 				},
 				{
-					"name": "add boat2 with extra attributes (user2)",
+					"name": "201 add boat2 with extra attributes (user2)",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"const newBoat = JSON.parse(pm.environment.get(\"boat2\"));",
-									"delete newBoat.numberOfLifeBoats;",
-									"",
+									"// Verify status code",
 									"pm.test(\"201 status code\", function () {",
-									"    //Check for 201 status code",
 									"    pm.response.to.have.status(201);",
 									"});",
 									"",
+									"// Verify response body",
+									"const newBoat = JSON.parse(pm.environment.get(\"boat2\"));",
+									"delete newBoat.numberOfLifeBoats;",
+									"validateResponse(newBoat, \"/boats/\", {user: \"user2\"});",
 									"",
-									"validateResponse(newBoat, \"user2\");",
+									"// Set environment variables",
 									"pm.environment.set(\"boat2\", JSON.stringify(pm.response.json()));",
 									"pm.environment.set(\"boatId2\", pm.response.json()[\"id\"]);",
-									"",
-									"// pm.environment.set(\"boat2_name\", pm.response.json()[\"name\"]);",
-									"// pm.environment.set(\"boat2_type\", pm.response.json()[\"type\"]);",
-									"// pm.environment.set(\"boat2_length\", pm.response.json()[\"length\"]);"
+									""
 								],
 								"type": "text/javascript"
 							}
@@ -212,18 +209,18 @@
 					"response": []
 				},
 				{
-					"name": "add boat with empty name",
+					"name": "400 add boat with empty name",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"400 status invalid name\", function () {",
-									"    //Check for 201 status code",
 									"    pm.response.to.have.status(400);",
 									"});",
 									"",
-									"// Confirm error message",
+									"// Verify error message",
 									"pm.test(\"Invalid name error message\", () => {",
 									"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\");",
 									"});",
@@ -261,18 +258,18 @@
 					"response": []
 				},
 				{
-					"name": "add boat with name too long",
+					"name": "400 add boat with name too long",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"400 status invalid name\", function () {",
-									"    //Check for 201 status code",
 									"    pm.response.to.have.status(400);",
 									"});",
 									"",
-									"// Confirm error message",
+									"// Verify error message",
 									"pm.test(\"Invalid name error message\", () => {",
 									"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\");",
 									"});",
@@ -310,18 +307,18 @@
 					"response": []
 				},
 				{
-					"name": "add boat with length too long",
+					"name": "400 add boat with length too long",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"400 status invalid length\", function () {",
-									"    //Check for 201 status code",
 									"    pm.response.to.have.status(400);",
 									"});",
 									"",
-									"// Confirm error message",
+									"// Verify error message",
 									"pm.test(\"Invalid length error message\", () => {",
 									"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\");",
 									"});",
@@ -359,18 +356,18 @@
 					"response": []
 				},
 				{
-					"name": "add boat with length too short",
+					"name": "400 add boat with length too short",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"400 status invalid length\", function () {",
-									"    //Check for 201 status code",
 									"    pm.response.to.have.status(400);",
 									"});",
 									"",
-									"// Confirm error message",
+									"// Verify error message",
 									"pm.test(\"Invalid length error message\", () => {",
 									"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\");",
 									"});",
@@ -408,18 +405,18 @@
 					"response": []
 				},
 				{
-					"name": "add boat with float length",
+					"name": "400 add boat with float length",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"400 status invalid length\", function () {",
-									"    //Check for 201 status code",
 									"    pm.response.to.have.status(400);",
 									"});",
 									"",
-									"// Confirm error message",
+									"// Verify error message",
 									"pm.test(\"Invalid length error message\", () => {",
 									"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\");",
 									"});",
@@ -457,18 +454,18 @@
 					"response": []
 				},
 				{
-					"name": "add boat with unparseable length",
+					"name": "400 add boat with unparseable length",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"400 status invalid length\", function () {",
-									"    //Check for 201 status code",
 									"    pm.response.to.have.status(400);",
 									"});",
 									"",
-									"// Confirm error message",
+									"// Verify error message",
 									"pm.test(\"Invalid length error message\", () => {",
 									"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\");",
 									"});",
@@ -506,18 +503,18 @@
 					"response": []
 				},
 				{
-					"name": "add boat with type too short",
+					"name": "400 add boat with type too short",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"400 status invalid type\", function () {",
-									"    //Check for 201 status code",
 									"    pm.response.to.have.status(400);",
 									"});",
 									"",
-									"// Confirm error message",
+									"// Verify error message",
 									"pm.test(\"Invalid type error message\", () => {",
 									"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\");",
 									"});",
@@ -555,18 +552,18 @@
 					"response": []
 				},
 				{
-					"name": "add boat with type too long",
+					"name": "400 add boat with type too long",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"400 status invalid type\", function () {",
-									"    //Check for 201 status code",
 									"    pm.response.to.have.status(400);",
 									"});",
 									"",
-									"// Confirm error message",
+									"// Verify error message",
 									"pm.test(\"Invalid type error message\", () => {",
 									"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\");",
 									"});",
@@ -604,18 +601,18 @@
 					"response": []
 				},
 				{
-					"name": "add boat with unsupported Accept header",
+					"name": "406 add boat with unsupported Accept header",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"406 status not acceptable\", function () {",
-									"    //Check for 201 status code",
 									"    pm.response.to.have.status(406);",
 									"});",
 									"",
-									"// Confirm error message",
+									"// Verify error message",
 									"pm.test(\"Not acceptable error message\", () => {",
 									"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"Requested MIME type is not supported.\");",
 									"});",
@@ -658,18 +655,18 @@
 					"response": []
 				},
 				{
-					"name": "add boat with unsupported Content-type header",
+					"name": "415 add boat with unsupported Content-type header",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"415 status bad content-type\", function () {",
-									"    //Check for 201 status code",
 									"    pm.response.to.have.status(415);",
 									"});",
 									"",
-									"// Confirm error message",
+									"// Verify error message",
 									"pm.test(\"Bad content-type error message\", () => {",
 									"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"Request body contains unsupported MIME type.\");",
 									"});",
@@ -712,12 +709,13 @@
 					"response": []
 				},
 				{
-					"name": "Add boat expired token",
+					"name": "401 Add boat expired token",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"401 Unauthorized\", function () {",
 									"    pm.response.to.have.status(401);",
 									"});"
@@ -761,12 +759,13 @@
 					"response": []
 				},
 				{
-					"name": "Add boat missing token",
+					"name": "401 Add boat missing token",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"401 Unauthorized\", function () {",
 									"    pm.response.to.have.status(401);",
 									"});"
@@ -803,12 +802,13 @@
 					"response": []
 				},
 				{
-					"name": "Add boat invalid token",
+					"name": "401 Add boat invalid token",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"401 Unauthorized\", function () {",
 									"    pm.response.to.have.status(401);",
 									"});"
@@ -852,25 +852,24 @@
 					"response": []
 				},
 				{
-					"name": "add boat3 (user1)",
+					"name": "201 add boat3 (user1)",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"const newBoat = JSON.parse(pm.environment.get(\"boat3\"));",
-									"",
+									"// Verify status code",
 									"pm.test(\"201 status code\", function () {",
-									"    //Check for 201 status code",
 									"    pm.response.to.have.status(201);",
 									"});",
 									"",
-									"validateResponse(newBoat);",
+									"// Verify response body",
+									"const newBoat = JSON.parse(pm.environment.get(\"boat3\"));",
+									"validateResponse(newBoat, \"/boats/\");",
+									"",
+									"// Set environment variables",
 									"pm.environment.set(\"boat3\", JSON.stringify(pm.response.json()))",
 									"pm.environment.set(\"boatId3\", pm.response.json()[\"id\"]);",
-									"// pm.environment.set(\"boat_name\", pm.response.json()[\"name\"]);",
-									"// pm.environment.set(\"boat_type\", pm.response.json()[\"type\"]);",
-									"// pm.environment.set(\"boat_length\", pm.response.json()[\"length\"]);",
 									""
 								],
 								"type": "text/javascript"
@@ -943,25 +942,25 @@
 			"name": "GET /boats",
 			"item": [
 				{
-					"name": "get boat no headers",
+					"name": "200 get boat no headers",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"200 status code\", function () {",
-									"    //Check for success 200 response code",
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"// Check for Content-type header",
+									"// Verify content type",
 									"pm.test(\"Content-type json\", () => {",
 									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.have.string(\"application/json\");",
 									"});",
 									"",
-									"",
+									"// Verify response body",
 									"const boat = JSON.parse(pm.environment.get(\"boat1\"));",
-									"validateResponse(boat);",
+									"validateResponse(boat, \"/boats/\");",
 									""
 								],
 								"type": "text/javascript"
@@ -990,25 +989,25 @@
 					"response": []
 				},
 				{
-					"name": "get boat JSON",
+					"name": "200 get boat JSON",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"200 status code\", function () {",
-									"    //Check for success 200 response code",
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"// Check for Content-type header",
+									"// Verify content type",
 									"pm.test(\"Content-type json\", () => {",
 									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.have.string(\"application/json\");",
 									"});",
 									"",
-									"",
+									"// Verify response body",
 									"const boat = JSON.parse(pm.environment.get(\"boat1\"));",
-									"validateResponse(boat);",
+									"validateResponse(boat, \"/boats/\");",
 									""
 								],
 								"type": "text/javascript"
@@ -1038,25 +1037,25 @@
 					"response": []
 				},
 				{
-					"name": "get boat3",
+					"name": "200 get boat3",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"200 status code\", function () {",
-									"    //Check for success 200 response code",
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"// Check for Content-type header",
+									"// Verify content type",
 									"pm.test(\"Content-type json\", () => {",
 									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.have.string(\"application/json\");",
 									"});",
 									"",
-									"",
+									"// Verify response body",
 									"const boat = JSON.parse(pm.environment.get(\"boat3\"));",
-									"validateResponse(boat);",
+									"validateResponse(boat, \"/boats/\");",
 									""
 								],
 								"type": "text/javascript"
@@ -1086,20 +1085,19 @@
 					"response": []
 				},
 				{
-					"name": "get boat with invalid id",
+					"name": "404 get boat with invalid id",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"404 not found\", function () {",
-									"    //Check for 404 response",
 									"    pm.response.to.have.status(404);",
 									"});",
 									"",
-									"",
+									"// Verify error message",
 									"pm.test(\"404 error message\", function () {",
-									"     //Check for error message",
 									"     pm.expect(pm.response.json()[\"Error\"]).to.eq(\"No boat with this boat_id exists.\");",
 									"});"
 								],
@@ -1111,31 +1109,31 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{app_url}}/boats/{{invalid_boat_id}}",
+							"raw": "{{app_url}}/boats/{{invalidId}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{invalid_boat_id}}"
+								"{{invalidId}}"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "get boat with unsupported Accept header",
+					"name": "406 get boat with unsupported Accept header",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"406 status not acceptable\", function () {",
-									"    //Check for 201 status code",
 									"    pm.response.to.have.status(406);",
 									"});",
 									"",
-									"// Confirm error message",
+									"// Verify error message",
 									"pm.test(\"Not acceptable error message\", () => {",
 									"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"Requested MIME type is not supported.\");",
 									"});",
@@ -1170,17 +1168,18 @@
 					"response": []
 				},
 				{
-					"name": "attempt to get another user's boat",
+					"name": "403 attempt to get another user's boat",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"403 forbidden\", function () {",
 									"    pm.response.to.have.status(403);",
 									"});",
 									"",
-									"// Confirm error message",
+									"// Verify error message",
 									"pm.test(\"Wrong owner error message\", () => {",
 									"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The authorized user does not have access to this boat.\");",
 									"});",
@@ -1209,25 +1208,25 @@
 					"response": []
 				},
 				{
-					"name": "user2 get boat",
+					"name": "200 user2 get boat",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"200 status code\", function () {",
-									"    //Check for success 200 response code",
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"// Check for Content-type header",
+									"// Verify content type",
 									"pm.test(\"Content-type json\", () => {",
 									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.have.string(\"application/json\");",
 									"});",
 									"",
-									"",
+									"// Verify response body",
 									"const boat = JSON.parse(pm.environment.get(\"boat2\"));",
-									"validateResponse(boat, \"user2\");",
+									"validateResponse(boat, \"/boats/\", {user: \"user2\"});",
 									""
 								],
 								"type": "text/javascript"
@@ -1261,15 +1260,143 @@
 					"response": []
 				},
 				{
-					"name": "get all user1's boats",
+					"name": "401 Get boat1 expired token",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code 200\", () => {",
-									"    pm.expect(pm.response).to.have.status(200);",
+									"// Verify status code",
+									"pm.test(\"401 Unauthorized\", function () {",
+									"    pm.response.to.have.status(401);",
 									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{expiredToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId1}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "401 Get boat1 missing token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Verify status code",
+									"pm.test(\"401 Unauthorized\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId1}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "401 Get boat1 invalid token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Verify status code",
+									"pm.test(\"401 Unauthorized\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{invalidToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId1}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "200 get all user1's boats",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Verify status code",
+									"pm.test(\"Status 200\", ()=>pm.expect(pm.response).to.have.status(200));",
+									"",
+									"// Verify response body",
+									"pm.test(\"count is 2\", ()=> pm.expect(pm.response.json()[\"count\"]).to.eq(2));",
+									"pm.test(\"list is populated\", ()=> pm.expect(pm.response.json()[\"data\"]).to.have.lengthOf(2));",
+									"",
+									"const boat1 = JSON.parse(pm.environment.get(\"boat1\"));",
+									"const boat3 = JSON.parse(pm.environment.get(\"boat3\"));",
+									"",
+									"validateResponse(boat1, \"/boats/\", {actualObject: pm.response.json()[\"data\"][0]});",
+									"validateResponse(boat3, \"/boats/\", {actualObject: pm.response.json()[\"data\"][1]});"
 								],
 								"type": "text/javascript"
 							}
@@ -1291,15 +1418,22 @@
 					"response": []
 				},
 				{
-					"name": "get all user2's boats",
+					"name": "200 get all user2's boats",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code 200\", () => {",
-									"    pm.expect(pm.response).to.have.status(200);",
-									"});"
+									"// Verify status code",
+									"pm.test(\"Status 200\", ()=>pm.expect(pm.response).to.have.status(200));",
+									"",
+									"// Verify response body",
+									"pm.test(\"count is 1\", ()=> pm.expect(pm.response.json()[\"count\"]).to.eq(1));",
+									"pm.test(\"list is populated\", ()=> pm.expect(pm.response.json()[\"data\"]).to.have.lengthOf(1));",
+									"",
+									"const boat2 = JSON.parse(pm.environment.get(\"boat2\"));",
+									"",
+									"validateResponse(boat2, \"/boats/\", {user: \"user2\", actualObject: pm.response.json()[\"data\"][0]});"
 								],
 								"type": "text/javascript"
 							}
@@ -1331,12 +1465,13 @@
 					"response": []
 				},
 				{
-					"name": "Get all boats expired token",
+					"name": "401 Get all boats expired token",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"401 Unauthorized\", function () {",
 									"    pm.response.to.have.status(401);",
 									"});"
@@ -1371,12 +1506,13 @@
 					"response": []
 				},
 				{
-					"name": "Get all boats missing token",
+					"name": "401 Get all boats missing token",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"401 Unauthorized\", function () {",
 									"    pm.response.to.have.status(401);",
 									"});"
@@ -1404,12 +1540,13 @@
 					"response": []
 				},
 				{
-					"name": "Get all boats invalid token",
+					"name": "401 Get all boats invalid token",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"401 Unauthorized\", function () {",
 									"    pm.response.to.have.status(401);",
 									"});"
@@ -1469,7 +1606,7 @@
 			"name": "PATCH /boats",
 			"item": [
 				{
-					"name": "update boat name",
+					"name": "200 update boat name",
 					"event": [
 						{
 							"listen": "test",
@@ -1480,10 +1617,11 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"",
 									"// Verify response body",
 									"const expBoat = applyEdits(\"boat1\", \"boat1Patch\");",
 									"validateResponse(expBoat);",
+									"",
+									"// Update environment variables",
 									"pm.environment.set(\"boat1\", JSON.stringify(expBoat));",
 									""
 								],
@@ -1530,7 +1668,7 @@
 					"response": []
 				},
 				{
-					"name": "update boat name and length",
+					"name": "200 update boat name and length",
 					"event": [
 						{
 							"listen": "test",
@@ -1541,10 +1679,11 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"",
 									"// Verify response body",
 									"const expBoat = applyEdits(\"boat1\", \"boat1Patch\");",
 									"validateResponse(expBoat);",
+									"",
+									"// Update environment variables",
 									"pm.environment.set(\"boat1\", JSON.stringify(expBoat));",
 									""
 								],
@@ -1592,7 +1731,7 @@
 					"response": []
 				},
 				{
-					"name": "update boat name, length, and type",
+					"name": "200 update boat name, length, and type",
 					"event": [
 						{
 							"listen": "test",
@@ -1603,10 +1742,11 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"",
 									"// Verify response body",
 									"const expBoat = applyEdits(\"boat1\", \"boat1Patch\");",
 									"validateResponse(expBoat);",
+									"",
+									"// Update environment variables",
 									"pm.environment.set(\"boat1\", JSON.stringify(expBoat));",
 									""
 								],
@@ -1655,7 +1795,7 @@
 					"response": []
 				},
 				{
-					"name": "update boat to have same name",
+					"name": "200 update boat to have same name",
 					"event": [
 						{
 							"listen": "test",
@@ -1666,10 +1806,11 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"",
 									"// Verify response body",
 									"const expBoat = applyEdits(\"boat1\", \"boat1Patch\");",
 									"validateResponse(expBoat);",
+									"",
+									"// Update environment variables",
 									"pm.environment.set(\"boat1\", JSON.stringify(expBoat));"
 								],
 								"type": "text/javascript"
@@ -1717,7 +1858,7 @@
 					"response": []
 				},
 				{
-					"name": "update boat id",
+					"name": "200 update boat id",
 					"event": [
 						{
 							"listen": "test",
@@ -1728,10 +1869,11 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"",
 									"// Verify response body",
 									"const expBoat = applyEdits(\"boat1\", \"boat1Patch\");",
 									"validateResponse(expBoat);",
+									"",
+									"// Update environment variables",
 									"pm.environment.set(\"boat1\", JSON.stringify(expBoat));"
 								],
 								"type": "text/javascript"
@@ -1778,7 +1920,7 @@
 					"response": []
 				},
 				{
-					"name": "update boat with empty body",
+					"name": "200 update boat with empty body",
 					"event": [
 						{
 							"listen": "test",
@@ -1789,10 +1931,11 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"",
 									"// Verify response body",
 									"const expBoat = JSON.parse(pm.environment.get(\"boat1\"));",
 									"validateResponse(expBoat);",
+									"",
+									"// Update environment variables",
 									"pm.environment.set(\"boat1\", JSON.stringify(expBoat));",
 									""
 								],
@@ -1835,7 +1978,7 @@
 					"response": []
 				},
 				{
-					"name": "update boat to have extra properties",
+					"name": "200 update boat to have extra properties",
 					"event": [
 						{
 							"listen": "test",
@@ -1846,10 +1989,11 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"",
 									"// Verify response body",
 									"const expBoat = JSON.parse(pm.environment.get(\"boat1\"));",
 									"validateResponse(expBoat);",
+									"",
+									"// Update environment variables",
 									"pm.environment.set(\"boat1\", JSON.stringify(expBoat));",
 									""
 								],
@@ -1892,7 +2036,7 @@
 					"response": []
 				},
 				{
-					"name": "update boat to invalid name",
+					"name": "400 update boat to invalid name",
 					"event": [
 						{
 							"listen": "test",
@@ -1903,7 +2047,7 @@
 									"    pm.response.to.have.status(400);",
 									"});",
 									"",
-									"// Verify error description",
+									"// Verify error message",
 									"pm.test(\"Error description\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\"));",
 									""
 								],
@@ -1946,7 +2090,7 @@
 					"response": []
 				},
 				{
-					"name": "update boat to invalid length",
+					"name": "400 update boat to invalid length",
 					"event": [
 						{
 							"listen": "test",
@@ -1957,7 +2101,7 @@
 									"    pm.response.to.have.status(400);",
 									"});",
 									"",
-									"// Verify error description",
+									"// Verify error message",
 									"pm.test(\"Error description\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\"));",
 									""
 								],
@@ -2000,7 +2144,7 @@
 					"response": []
 				},
 				{
-					"name": "update boat to invalid type",
+					"name": "400 update boat to invalid type",
 					"event": [
 						{
 							"listen": "test",
@@ -2011,7 +2155,7 @@
 									"    pm.response.to.have.status(400);",
 									"});",
 									"",
-									"// Verify error description",
+									"// Verify error message",
 									"pm.test(\"Error description\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\"));",
 									""
 								],
@@ -2054,16 +2198,16 @@
 					"response": []
 				},
 				{
-					"name": "update boat with invalid id",
+					"name": "404 update boat with invalid id",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"// Check status code",
+									"// Verify status code",
 									"pm.test(\"Status 404\", ()=> pm.response.to.have.status(404));",
 									"",
-									"// Check error message",
+									"// Verify error message",
 									"pm.test(\"Error message\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"No boat with this boat_id exists.\"));"
 								],
 								"type": "text/javascript"
@@ -2083,30 +2227,31 @@
 							}
 						},
 						"url": {
-							"raw": "{{app_url}}/boats/{{invalid_boat_id}}",
+							"raw": "{{app_url}}/boats/{{invalidId}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{invalid_boat_id}}"
+								"{{invalidId}}"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "attempt to update another user's boat",
+					"name": "403 attempt to update another user's boat",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"403 forbidden\", function () {",
 									"    pm.response.to.have.status(403);",
 									"});",
 									"",
-									"// Confirm error message",
+									"// Verify error message",
 									"pm.test(\"Wrong owner error message\", () => {",
 									"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The authorized user does not have access to this boat.\");",
 									"});",
@@ -2144,16 +2289,16 @@
 					"response": []
 				},
 				{
-					"name": "update boat with unsupported Accept header",
+					"name": "406 update boat with unsupported Accept header",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"// Status code",
+									"// Verify status code",
 									"pm.test(\"Status 406\", ()=>pm.response.to.have.status(406));",
 									"",
-									"// Error message",
+									"// Verify error message",
 									"pm.test(\"Error message\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"Requested MIME type is not supported.\"));"
 								],
 								"type": "text/javascript"
@@ -2192,16 +2337,16 @@
 					"response": []
 				},
 				{
-					"name": "update boat with unsupported Content-type header",
+					"name": "415 update boat with unsupported Content-type header",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"// Status code",
+									"// Verify status code",
 									"pm.test(\"Status 415\", ()=>pm.response.to.have.status(415));",
 									"",
-									"// Error message",
+									"// Verify error message",
 									"pm.test(\"Error message\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"Request body contains unsupported MIME type.\"));"
 								],
 								"type": "text/javascript"
@@ -2229,12 +2374,159 @@
 					"response": []
 				},
 				{
-					"name": "verify boat1 unchanged after errant requests",
+					"name": "401 patch boat expired token",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
+									"pm.test(\"401 Unauthorized\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{expiredToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"junk\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId1}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "401 patch boat missing token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Verify status code",
+									"pm.test(\"401 Unauthorized\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"junk\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId1}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "401 patch boat invalid token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Verify status code",
+									"pm.test(\"401 Unauthorized\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{invalidToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"junk\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId1}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "200 verify boat1 unchanged after errant requests",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Verify status code",
 									"pm.test(\"Status 200\", ()=>pm.expect(pm.response).to.have.status(200));",
 									"",
 									"// Verify response body",
@@ -2263,17 +2555,18 @@
 					"response": []
 				},
 				{
-					"name": "verify boat2 unchanged after errant requests",
+					"name": "200 verify boat2 unchanged after errant requests",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"Status 200\", ()=>pm.expect(pm.response).to.have.status(200));",
 									"",
 									"// Verify response body",
 									"const expBoat = JSON.parse(pm.environment.get(\"boat2\"));",
-									"validateResponse(expBoat, \"user2\");",
+									"validateResponse(expBoat, {user: \"user2\"});",
 									""
 								],
 								"type": "text/javascript"
@@ -2312,7 +2605,7 @@
 			"name": "PUT /boats",
 			"item": [
 				{
-					"name": "update all boat attributes",
+					"name": "200 update all boat attributes",
 					"event": [
 						{
 							"listen": "test",
@@ -2377,7 +2670,7 @@
 					"response": []
 				},
 				{
-					"name": "update boat with extra attributes",
+					"name": "200 update boat with extra attributes",
 					"event": [
 						{
 							"listen": "test",
@@ -2443,7 +2736,7 @@
 					"response": []
 				},
 				{
-					"name": "update boat with missing attributes",
+					"name": "400 update boat with missing attributes",
 					"event": [
 						{
 							"listen": "test",
@@ -2454,7 +2747,7 @@
 									"    pm.response.to.have.status(400);",
 									"});",
 									"",
-									"// Verify error description",
+									"// Verify error message",
 									"pm.test(\"Error description\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\"));",
 									"",
 									""
@@ -2498,7 +2791,7 @@
 					"response": []
 				},
 				{
-					"name": "update boat with empty body",
+					"name": "400 update boat with empty body",
 					"event": [
 						{
 							"listen": "test",
@@ -2509,7 +2802,7 @@
 									"    pm.response.to.have.status(400);",
 									"});",
 									"",
-									"// Verify error description",
+									"// Verify error message",
 									"pm.test(\"Error description\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\"));",
 									""
 								],
@@ -2552,7 +2845,7 @@
 					"response": []
 				},
 				{
-					"name": "update boat with invalid name",
+					"name": "400 update boat with invalid name",
 					"event": [
 						{
 							"listen": "test",
@@ -2563,7 +2856,7 @@
 									"    pm.response.to.have.status(400);",
 									"});",
 									"",
-									"// Verify error description",
+									"// Verify error message",
 									"pm.test(\"Error description\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\"));",
 									""
 								],
@@ -2606,7 +2899,7 @@
 					"response": []
 				},
 				{
-					"name": "update boat with invalid length",
+					"name": "400 update boat with invalid length",
 					"event": [
 						{
 							"listen": "test",
@@ -2617,7 +2910,7 @@
 									"    pm.response.to.have.status(400);",
 									"});",
 									"",
-									"// Verify error description",
+									"// Verify error message",
 									"pm.test(\"Error description\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\"));",
 									""
 								],
@@ -2660,7 +2953,7 @@
 					"response": []
 				},
 				{
-					"name": "update boat with invalid type",
+					"name": "400 update boat with invalid type",
 					"event": [
 						{
 							"listen": "test",
@@ -2671,7 +2964,7 @@
 									"    pm.response.to.have.status(400);",
 									"});",
 									"",
-									"// Verify error description",
+									"// Verify error message",
 									"pm.test(\"Error description\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"One or more of the request attributes are missing or invalid.\"));",
 									""
 								],
@@ -2714,16 +3007,16 @@
 					"response": []
 				},
 				{
-					"name": "update boat with invalid id",
+					"name": "404 update boat with invalid id",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"// Check status code",
+									"// Verify status code",
 									"pm.test(\"Status 404\", ()=> pm.response.to.have.status(404));",
 									"",
-									"// Check error message",
+									"// Verify error message",
 									"pm.test(\"Error message\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"No boat with this boat_id exists.\"));"
 								],
 								"type": "text/javascript"
@@ -2743,30 +3036,31 @@
 							}
 						},
 						"url": {
-							"raw": "{{app_url}}/boats/{{invalid_boat_id}}",
+							"raw": "{{app_url}}/boats/{{invalidId}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{invalid_boat_id}}"
+								"{{invalidId}}"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "attempt to update another user's boat",
+					"name": "403 attempt to update another user's boat",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"403 forbidden\", function () {",
 									"    pm.response.to.have.status(403);",
 									"});",
 									"",
-									"// Confirm error message",
+									"// Verify error message",
 									"pm.test(\"Wrong owner error message\", () => {",
 									"    pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The authorized user does not have access to this boat.\");",
 									"});",
@@ -2804,16 +3098,16 @@
 					"response": []
 				},
 				{
-					"name": "update boat with unsupported Accept header",
+					"name": "406 update boat with unsupported Accept header",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"// Status code",
+									"// Verify status code",
 									"pm.test(\"Status 406\", ()=>pm.response.to.have.status(406));",
 									"",
-									"// Error message",
+									"// Verify error message",
 									"pm.test(\"Error message\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"Requested MIME type is not supported.\"));"
 								],
 								"type": "text/javascript"
@@ -2852,16 +3146,16 @@
 					"response": []
 				},
 				{
-					"name": "update boat with unsupported Content-type header Copy",
+					"name": "415 update boat with unsupported Content-type header Copy",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"// Status code",
+									"// Verify status code",
 									"pm.test(\"Status 415\", ()=>pm.response.to.have.status(415));",
 									"",
-									"// Error message",
+									"// Verify error message",
 									"pm.test(\"Error message\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"Request body contains unsupported MIME type.\"));"
 								],
 								"type": "text/javascript"
@@ -2889,13 +3183,13 @@
 					"response": []
 				},
 				{
-					"name": "try to update /boats",
+					"name": "405 try to update /boats",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"// Status code",
+									"// Verify status code",
 									"pm.test(\"Status 405\", ()=>pm.response.to.have.status(405));"
 								],
 								"type": "text/javascript"
@@ -2927,12 +3221,159 @@
 					"response": []
 				},
 				{
-					"name": "verify boat1 unchanged after errant requests",
+					"name": "401 put boat expired token",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
+									"pm.test(\"401 Unauthorized\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{expiredToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"a\",\n    \"type\": \"b\",\n    \"length\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId1}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "401 put boat missing token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Verify status code",
+									"pm.test(\"401 Unauthorized\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"a\",\n    \"type\": \"b\",\n    \"length\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId1}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "401 put boat invalid token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Verify status code",
+									"pm.test(\"401 Unauthorized\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{invalidToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"a\",\n    \"type\": \"b\",\n    \"length\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId1}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "200 verify boat1 unchanged after errant requests",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Verify status code",
 									"pm.test(\"Status 200\", ()=>pm.expect(pm.response).to.have.status(200));",
 									"",
 									"// Verify response body",
@@ -2961,17 +3402,18 @@
 					"response": []
 				},
 				{
-					"name": "verify boat2 unchanged after errant requests",
+					"name": "200 verify boat2 unchanged after errant requests",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
+									"// Verify status code",
 									"pm.test(\"Status 200\", ()=>pm.expect(pm.response).to.have.status(200));",
 									"",
 									"// Verify response body",
 									"const expBoat = JSON.parse(pm.environment.get(\"boat2\"));",
-									"validateResponse(expBoat, \"user2\");",
+									"validateResponse(expBoat, {user: \"user2\"});",
 									""
 								],
 								"type": "text/javascript"
@@ -3010,13 +3452,13 @@
 			"name": "DEL /boats",
 			"item": [
 				{
-					"name": "try to delete /boats",
+					"name": "405 try to delete /boats",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"// Status code",
+									"// Verify status code",
 									"pm.test(\"Status 405\", ()=>pm.response.to.have.status(405));"
 								],
 								"type": "text/javascript"
@@ -3048,80 +3490,19 @@
 					"response": []
 				},
 				{
-					"name": "delete boat",
+					"name": "404 delete boat with invalid id",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"204 no content\", function () {",
-									"    pm.response.to.have.status(204);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{app_url}}/boats/{{boat_id}}",
-							"host": [
-								"{{app_url}}"
-							],
-							"path": [
-								"boats",
-								"{{boat_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "delete boat 2",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"204 no content\", function () {",
-									"    pm.response.to.have.status(204);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{app_url}}/boats/{{boat2_id}}",
-							"host": [
-								"{{app_url}}"
-							],
-							"path": [
-								"boats",
-								"{{boat2_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "delete boat with invalid id",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
+									"// Verify status code",
 									"pm.test(\"404 not found\", function () {",
 									"    //Check for appropriate 404 status code",
 									"    pm.response.to.have.status(404);",
 									"});",
 									"",
-									"",
+									"// Verify error message",
 									"pm.test(\"404 error message\", function () {",
 									"     //Check for appropriate error message",
 									"    pm.expect(pm.response.json()[\"Error\"]).to.equal(\"No boat with this boat_id exists.\");",
@@ -3135,13 +3516,459 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{app_url}}/boats/{{invalid_boat_id}}",
+							"raw": "{{app_url}}/boats/{{invalidId}}",
 							"host": [
 								"{{app_url}}"
 							],
 							"path": [
 								"boats",
-								"{{invalid_boat_id}}"
+								"{{invalidId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "403 attempt to delete another user's boat",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Verify status code",
+									"pm.test(\"Status 403\", ()=>pm.expect(pm.response).to.have.status(403));",
+									"",
+									"// Verify error message",
+									"pm.test(\"Error message\", ()=>pm.expect(pm.response.json()[\"Error\"]).to.eq(\"The authorized user does not have access to this boat.\"));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId2}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId2}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "401 delete boat expired token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Verify status code",
+									"pm.test(\"Status 401\", ()=>pm.expect(pm.response).to.have.status(401));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{expiredToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId1}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "401 delete boat missing token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Verify status code",
+									"pm.test(\"Status 401\", ()=>pm.expect(pm.response).to.have.status(401));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId1}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "401 delete boat invalid token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Verify status code",
+									"pm.test(\"Status 401\", ()=>pm.expect(pm.response).to.have.status(401));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{invalidToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId1}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "204 delete boat1",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Verify status code",
+									"pm.test(\"204 no content\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId1}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "204 delete boat2",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Verify status code",
+									"pm.test(\"204 no content\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt2}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId2}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId2}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "204 delete boat3",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Verify status code",
+									"pm.test(\"204 no content\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId3}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId3}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "404 confirm boat1 deleted",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Verify status code",
+									"pm.test(\"404 not found\", function () {",
+									"    //Check for appropriate 404 status code",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"// Verify error message",
+									"pm.test(\"404 error message\", function () {",
+									"     //Check for appropriate error message",
+									"    pm.expect(pm.response.json()[\"Error\"]).to.equal(\"No boat with this boat_id exists.\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId1}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "404 confirm boat2 deleted",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Verify status code",
+									"pm.test(\"404 not found\", function () {",
+									"    //Check for appropriate 404 status code",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"// Verify error message",
+									"pm.test(\"404 error message\", function () {",
+									"     //Check for appropriate error message",
+									"    pm.expect(pm.response.json()[\"Error\"]).to.equal(\"No boat with this boat_id exists.\");",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId2}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId2}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "404 confirm boat3 deleted",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Verify status code",
+									"pm.test(\"404 not found\", function () {",
+									"    //Check for appropriate 404 status code",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"// Verify error message",
+									"pm.test(\"404 error message\", function () {",
+									"     //Check for appropriate error message",
+									"    pm.expect(pm.response.json()[\"Error\"]).to.equal(\"No boat with this boat_id exists.\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats/{{boatId3}}",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats",
+								"{{boatId3}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "200 get all user1 boats empty list",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Verify status code",
+									"pm.test(\"Status 200\", ()=>pm.expect(pm.response).to.have.status(200));",
+									"",
+									"// Verify response body",
+									"pm.test(\"count is 0\", ()=> pm.expect(pm.response.json()[\"count\"]).to.eq(0));",
+									"pm.test(\"empty list\", ()=> pm.expect(pm.response.json()[\"data\"]).to.be.empty);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "200 get all user2 boats empty list",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Verify status code",
+									"pm.test(\"Status 200\", ()=>pm.expect(pm.response).to.have.status(200));",
+									"",
+									"// Verify response body",
+									"pm.test(\"count is 0\", ()=> pm.expect(pm.response.json()[\"count\"]).to.eq(0));",
+									"pm.test(\"empty list\", ()=> pm.expect(pm.response.json()[\"data\"]).to.be.empty);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt2}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{app_url}}/boats",
+							"host": [
+								"{{app_url}}"
+							],
+							"path": [
+								"boats"
 							]
 						}
 					},
@@ -3151,94 +3978,7 @@
 		},
 		{
 			"name": "Cleanup",
-			"item": [
-				{
-					"name": "confirm boat1 deleted",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"404 not found\", function () {",
-									"    //Check for appropriate 404 status code",
-									"    pm.response.to.have.status(404);",
-									"});",
-									"",
-									"",
-									"pm.test(\"404 error message\", function () {",
-									"     //Check for appropriate error message",
-									"    pm.expect(pm.response.json()[\"Error\"]).to.equal(\"No boat with this boat_id exists.\");",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{app_url}}/boats/{{boat_id}}",
-							"host": [
-								"{{app_url}}"
-							],
-							"path": [
-								"boats",
-								"{{boat_id}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "confirm boat2 deleted",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"404 not found\", function () {",
-									"    //Check for appropriate 404 status code",
-									"    pm.response.to.have.status(404);",
-									"});",
-									"",
-									"",
-									"pm.test(\"404 error message\", function () {",
-									"     //Check for appropriate error message",
-									"    pm.expect(pm.response.json()[\"Error\"]).to.equal(\"No boat with this boat_id exists.\");",
-									"});",
-									"",
-									"// Cleanup",
-									"pm.environment.unset(\"boat_id\");",
-									"pm.environment.unset(\"boat_name\");",
-									"pm.environment.unset(\"boat_type\");",
-									"pm.environment.unset(\"boat_length\");",
-									"pm.environment.unset(\"boat2_id\");",
-									"pm.environment.unset(\"boat2_name\");",
-									"pm.environment.unset(\"boat2_type\");",
-									"pm.environment.unset(\"boat2_length\");"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{app_url}}/boats/{{boat2_id}}",
-							"host": [
-								"{{app_url}}"
-							],
-							"path": [
-								"boats",
-								"{{boat2_id}}"
-							]
-						}
-					},
-					"response": []
-				}
-			]
+			"item": []
 		}
 	],
 	"auth": {
@@ -3267,33 +4007,34 @@
 				"type": "text/javascript",
 				"exec": [
 					"// Define utility functions",
-					"validateResponse = (expObject, user=\"user1\") => {",
+					"validateResponse = (expObject, endpoint, {actualObject=pm.response.json(), user=\"user1\"}={}) => {",
 					"    pm.test(\"Response body is valid\", function () {",
+					"        console.log(actualObject);",
 					"        // Check if the response content is valid and matches the expected values",
 					"        for (prop in expObject) {",
 					"            console.log(`Testing ${prop}: ${expObject[prop]}`);",
-					"            pm.expect(pm.response.json()[prop]).to.eq(expObject[prop]);",
+					"            pm.expect(actualObject[prop]).to.eq(expObject[prop]);",
 					"        }",
 					"",
 					"        // Check for boat ID",
-					"        pm.expect(pm.response.json()).to.have.own.property(\"id\");",
+					"        pm.expect(actualObject).to.have.own.property(\"id\");",
 					"",
 					"        // Check if the self url is correct",
-					"        const self_url = pm.environment.get(\"app_url\") + \"/boats/\" + pm.response.json()[\"id\"];",
-					"        pm.expect(pm.response.json()[\"self\"]).to.eq(self_url);",
+					"        const self_url = pm.environment.get(\"app_url\") + endpoint + actualObject[\"id\"];",
+					"        pm.expect(actualObject[\"self\"]).to.eq(self_url);",
 					"",
 					"        // Check for expected user",
 					"        const expUser = pm.environment.get(user);",
-					"        pm.expect(pm.response.json()[\"user\"]).to.eq(expUser);",
+					"        pm.expect(actualObject[\"user\"]).to.eq(expUser);",
 					"    });",
 					"",
 					"}",
 					"",
-					"applyEdits = (boatName, editName) => {",
+					"applyEdits = (objName, editName) => {",
 					"    const edits = JSON.parse(pm.environment.get(editName));",
-					"    const boat = JSON.parse(pm.environment.get(boatName));",
-					"    Object.keys(boat).forEach(key => key !== \"id\" && (boat[key] = edits[key] || boat[key]));",
-					"    return boat;",
+					"    const obj = JSON.parse(pm.environment.get(objName));",
+					"    Object.keys(obj).forEach(key => key !== \"id\" && (obj[key] = edits[key] || obj[key]));",
+					"    return obj;",
 					"}",
 					""
 				]
