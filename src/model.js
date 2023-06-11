@@ -1,5 +1,6 @@
-const {Datastore} = require('@google-cloud/datastore');
+const { Datastore, PropertyFilter } = require('@google-cloud/datastore');
 const datastore = new Datastore();
+const PAGE_SIZE = 5;
 
 class EntityValidationError extends Error {}
 
@@ -170,7 +171,7 @@ async function createEntity(kind, entityData) {
     }
     try {
         await datastore.save(newEntity);
-        console.log(JSON.stringify(newEntity.key));
+        await addCounter(kind, 1);
         return await getEntity(kind, newEntity.key.id || newEntity.key.name,!newEntity.key.hasOwnProperty("id"));
     } catch(err) {
         return handleError(err);
@@ -191,7 +192,6 @@ async function getEntity(kind, entityId, isName=false) {
     try {
         const [retrievedEntity] = await datastore.get(key);
         retrievedEntity.id = retrievedEntity[Datastore.KEY].id;
-        console.log(JSON.stringify(retrievedEntity));
         return retrievedEntity;
     } catch (err) {
         return handleError(err);
@@ -204,12 +204,17 @@ async function getEntity(kind, entityId, isName=false) {
  * @param {string} kind
  * @returns list of objects, or error.
  */
-async function getAllEntities(kind) {
-    const query = datastore.createQuery(kind);
+async function getAllEntities(kind, filter=null, startCursor=null) {
+    let query = datastore.createQuery(kind).limit(PAGE_SIZE);
+    if (filter) {
+        propFilter = new PropertyFilter(...filter);
+        query = query.filter(propFilter);
+    }
+    if (startCursor) query = query.start(startCursor);
     try {
-        const [entities] = await datastore.runQuery(query);
+        const [entities, info] = await datastore.runQuery(query);
         entities.forEach((entity) => entity.id = entity[Datastore.KEY].id);
-        return entities;
+        return [entities, info.endCursor, await getCounterValue(kind)];
     } catch (err) {
         return handleError(err);
     }
@@ -238,9 +243,72 @@ async function updateEntity(entity) {
  */
 async function deleteEntity(entity) {
     try {
+        const kind = entity[Datastore.KEY]["kind"];
         await datastore.delete(entity[Datastore.KEY]);
+        await addCounter(kind, -1);
         return true;
     } catch (err) {
+        return handleError(err);
+    }
+}
+
+async function createCounters() {
+    const counters = [
+        {
+            key: datastore.key(["Counter", "Boat"]),
+            data: {
+                "count": 0
+            }
+        },
+        {
+            key: datastore.key(["Counter", "Load"]),
+            data: {
+                "count": 0
+            }
+        }
+    ];
+    const query = datastore.createQuery("Counter");
+    const [listOfCounters] = await datastore.runQuery(query);
+    if (! listOfCounters.length) {
+        await datastore.save(counters);
+    }
+}
+
+
+async function getCounter(kind) {
+    const counterKey = datastore.key(["Counter", kind]);
+    const transaction = datastore.transaction();
+    try {
+        await transaction.run();
+        let [counter] = await transaction.get(counterKey);
+        return [counter, transaction]
+    } catch (err) {
+        console.log("error in getCounter");
+        await transaction.rollback();
+        return handleError(err);
+    }
+}
+
+async function getCounterValue(kind) {
+    try {
+        const [counter, transaction] = await getCounter(kind);
+        await transaction.rollback();
+        return counter.count;
+    } catch (err) {
+        await transaction.rollback();
+        return handleError(err);
+    }
+}
+
+async function addCounter(kind, valueToAdd) {
+    const [counter, transaction] = await getCounter(kind);
+    try {
+        counter.count += valueToAdd;
+        transaction.save({key: datastore.key(["Counter", kind]), data: counter});
+        await transaction.commit();
+    } catch (err) {
+        console.log("error in addCounter");
+        await transaction.rollback();
         return handleError(err);
     }
 }
@@ -252,4 +320,5 @@ module.exports = {
     updateEntity,
     deleteEntity,
     EntityValidationError,
+    createCounters,
 };

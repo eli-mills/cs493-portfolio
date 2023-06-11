@@ -119,11 +119,10 @@ authentication.get("/user-info", (req, res) => {
 
 // BOATS
 boats.route("/")
-    .get(checkJwt, wrap(async (req, res) => {
-        console.log("GET /boats called");
+    .get(checkJwt, wrap(async (req, res, next) => {
         // User is authenticated
-        const allBoats = await db.getAllEntities("Boat");
-        const usersBoats = allBoats.filter(boat => boat.owner === req.auth.sub);
+        const [usersBoats, cursor, count] = await db.getAllEntities("Boat", ["user", "=", req.auth.sub]);
+        req.retrievedMetaData = {cursor, count};
         res.status(200).json(usersBoats);
     }))
     .post(assertContentJson, assertAcceptJson, checkJwt, wrap(async (req, res, next) => {
