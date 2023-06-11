@@ -196,16 +196,13 @@ boats.route("/")
             return next(err);
         }
     }), addSelfLinksToResponse)
-    .delete(async (req, res) => {
-        const boatToDelete = await db.getEntity("Boat", req.params.boatId);
-        if (!boatToDelete || boatToDelete.owner !== req.auth.sub) {
-            // ID doesn't exist or owner is unauthorized
-            res.status(403).end();
-            return;
-        }
-        db.deleteEntity(boatToDelete);
-        res.status(204).end();
-    });
+    .delete(wrap(async (req, res) => {
+        const boatToDelete = req.retrievedEntities[0];
+        if (! await db.deleteEntity(boatToDelete)) {
+            return res.status(500).end();
+        };
+        return res.status(204).end();
+    }));
 
 boats.use(handleValidationError);
 
