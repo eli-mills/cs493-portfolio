@@ -7,11 +7,6 @@ const jwt_decode = require('jwt-decode');
 const {wrap} = require('async-middleware');
 const DOMAIN = "millse2-cs493-portfolio.us.auth0.com";
 
-// INITIALIZE ROUTERS
-const authentication = express.Router();
-const boats = express.Router();
-const users = express.Router();
-
 /****************************************************************
  *                                                              *
  *                     LIBRARY MIDDLEWARE                       *
@@ -40,22 +35,12 @@ const checkJwt = jwt({
 
 /****************************************************************
  *                                                              *
- *                  CUSTOM MIDDLEWARE - COMMON                  *
+ *                 CUSTOM MIDDLEWARE - UTILITY                  *
  *                                                              *
 ****************************************************************/
 
 function getFullBaseUrl(req, id) {
     return `${req.protocol}://${req.get("host")}${req.baseUrl}`;
-}
-
-function getEntityFromParams(kind) {
-    const middlewareFn = async (req, res, next) => {
-        const retrievedEntity = await db.getEntity(kind, req.params.id);
-        if (!retrievedEntity) return res.status(404).json({"Error": `No ${kind.toLowerCase()} with this ${kind.toLowerCase()}_id exists.`});
-        req.retrievedEntities = retrievedEntity;
-        next();
-    }
-    return middlewareFn;
 }
 
 function addSelfLinkToResponse(req, res, next) {
@@ -136,27 +121,44 @@ function methodNotAllowed(req, res) {
 ****************************************************************/
 
 // POST
-async function mwPostEntity(req, res, next) {
-    req.body.user = req.auth.sub;
-    try {
-        const newBoat = await db.storeNewEntity("Boat", req.body);
-        req.retrievedEntities = newBoat;
-        res.status(201);
-        return next();
-    } catch (e) {
-        return next(e);
+function mwPostEntity(kind) {
+    const middlewareFn = async (req, res, next) => {
+        req.body.user = req.auth.sub;
+        try {
+            const newBoat = await db.storeNewEntity(kind, req.body);
+            req.retrievedEntities = newBoat;
+            res.status(201);
+            return next();
+        } catch (e) {
+            // Pass to middleware to check if EntityValidationError
+            return next(e);
+        }
     }
+    return middlewareFn;
 }
 
 // GET
-async function mwGetAllEntities(req, res, next) {
-    const [usersEntities, cursor, count] = await db.getAllEntities("Boat", req.auth.sub, req.query.cursor);
-    req.retrievedEntities = usersEntities;
-    req.retrievedMetaData = {cursor, count};
+function getEntityFromParams(kind) {
+    const middlewareFn = async (req, res, next) => {
+        const retrievedEntity = await db.getEntity(kind, req.params.id);
+        if (!retrievedEntity) return res.status(404).json({"Error": `No ${kind.toLowerCase()} with this ${kind.toLowerCase()}_id exists.`});
+        req.retrievedEntities = retrievedEntity;
+        return next();
+    }
+    return middlewareFn;
+}
 
-    console.log(cursor);
-    res.status(200);
-    return next();
+function mwGetAllEntities(kind) {
+    const middlewareFn = async (req, res, next) => {
+        const [usersEntities, cursor, count] = await db.getAllEntities(kind, req.auth.sub, req.query.cursor);
+        req.retrievedEntities = usersEntities;
+        req.retrievedMetaData = {cursor, count};
+        
+        console.log(cursor);
+        res.status(200);
+        return next();
+    }
+    return middlewareFn;
 }
 
 async function mwGetEntity (req, res, next) {
@@ -206,9 +208,41 @@ async function mwDeleteEntity(req, res) {
 
 /****************************************************************
  *                                                              *
+ *                   ENTITY ROUTER FACTORY                      *
+ *                                                              *
+****************************************************************/
+function generateEntityRouter(kind) {
+    router = express.Router();
+    router.route("/")
+    .all(checkJwt)
+    .get(checkJwt, wrap(mwGetAllEntities(kind)), addSelfLinksToResponseList, addMetaData, sendData)
+    .post(assertContentJson, assertAcceptJson, wrap(mwPostEntity(kind)), addSelfLinkToResponse, sendData)
+    .all(methodNotAllowed);
+    
+    router.route("/:id")
+    .all(checkJwt, wrap(getEntityFromParams(kind)), assertCorrectOwner)
+    .get(assertAcceptJson, wrap(mwGetEntity))
+    .patch(assertAcceptJson, assertContentJson, wrap(mwPatchEntity))
+    .put(assertAcceptJson, assertContentJson, wrap(mwPutEntity))
+    .delete(wrap(mwDeleteEntity))
+    .all(addSelfLinkToResponse, sendData);
+    
+    router.use(handleValidationError);
+
+    return router;
+}
+
+/****************************************************************
+ *                                                              *
  *                          ROUTERS                             *
  *                                                              *
 ****************************************************************/
+
+// INITIALIZE ROUTERS
+const authentication = express.Router();
+const users = express.Router();
+const boats = generateEntityRouter("Boat");
+const loads = generateEntityRouter("Load");
 
 // AUTHENTICATION
 authentication.use(authMiddleware);
@@ -224,22 +258,6 @@ authentication.get("/user-info", (req, res) => {
     res.json(req.oidc.idToken);
 });
 
-// BOATS
-boats.route("/")
-    .get(checkJwt, wrap(mwGetAllEntities), addSelfLinksToResponseList, addMetaData, sendData)
-    .post(assertContentJson, assertAcceptJson, checkJwt, wrap(mwPostEntity), addSelfLinkToResponse, sendData)
-    .all(methodNotAllowed);
-
-boats.route("/:id")
-    .all(checkJwt, getEntityFromParams("Boat"), assertCorrectOwner)
-    .get(assertAcceptJson, wrap(mwGetEntity))
-    .patch(assertAcceptJson, assertContentJson, wrap(mwPatchEntity))
-    .put(assertAcceptJson, assertContentJson, wrap(mwPutEntity))
-    .delete(wrap(mwDeleteEntity))
-    .all(addSelfLinkToResponse, sendData);
-
-boats.use(handleValidationError);
-
 // USERS
 users.get("/", async (req, res) => {
     const allUsers = await db.getAllEntities("User");
@@ -254,5 +272,6 @@ users.get("/", async (req, res) => {
 module.exports = {
     authentication,
     boats,
+    loads,
     users,
 }
