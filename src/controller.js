@@ -124,6 +124,19 @@ function methodNotAllowed(req, res) {
     return res.status(405).end();
 }
 
+async function updateLoads(req, res) {
+    if (req.baseUrl !== "/boats") return res.end();
+    
+    // Boat deleted. Find loads that were assigned to Boat.
+    const deletedBoat = req.retrievedEntity;
+    const loadsToUpdate = await db.getAllEntities("Load", ["carrier.id", "=", deletedBoat.id]);
+    for (const load of loadsToUpdate) {
+        load.carrier = null;
+        await db.replaceEntity(load);
+    }
+    return res.end();
+}
+
 /****************************************************************
  *                                                              *
  *              CUSTOM MIDDLEWARE - ROUTER MAINS                *
@@ -170,7 +183,7 @@ async function getEntitiesFromParams(req, res, next) {
 
 function mwGetAllEntities(kind) {
     const middlewareFn = async (req, res, next) => {
-        const [usersEntities, cursor, count] = await db.getAllEntities(kind, req.auth.sub, req.query.cursor);
+        const [usersEntities, cursor, count] = await db.getAllEntitiesPaginated(kind, req.auth.sub, req.query.cursor);
         req.retrievedEntities = usersEntities;
         req.retrievedMetaData = {cursor, count};
         
@@ -218,12 +231,13 @@ async function mwPutEntity (req, res, next) {
 }
 
 // DELETE
-async function mwDeleteEntity(req, res) {
+async function mwDeleteEntity(req, res, next) {
     const entityToDelete = req.retrievedEntity;
     if (! await db.deleteEntity(entityToDelete)) {
         return res.status(500).end();
     };
-    return res.status(204).end();
+    res.status(204);
+    return next();
 }
 
 /****************************************************************
@@ -244,7 +258,7 @@ function generateEntityRouter(kind) {
     .get(assertAcceptJson, wrap(mwGetEntity))
     .patch(assertAcceptJson, assertContentJson, wrap(mwPatchEntity))
     .put(assertAcceptJson, assertContentJson, wrap(mwPutEntity))
-    .delete(wrap(mwDeleteEntity))
+    .delete(wrap(mwDeleteEntity), updateLoads)
     .all(addSelfLinksToResponseList, sendData);
     
     router.use(handleValidationError);
@@ -280,7 +294,7 @@ authentication.get("/user-info", (req, res) => {
 
 // USERS
 users.get("/", async (req, res) => {
-    const allUsers = await db.getAllEntities("User");
+    const allUsers = await db.getAllEntitiesPaginated("User");
     res.status(200).json(allUsers);
 });
 

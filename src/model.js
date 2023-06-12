@@ -316,12 +316,29 @@ async function getEntity(kind, entityId, isName=false) {
  * @param {string} kind
  * @returns list of objects, or error.
  */
-async function getAllEntities(kind, user=undefined, startCursor=undefined) {
-    let query = datastore.createQuery(kind).limit(PAGE_SIZE);
-    if (user) {
-        propFilter = new PropertyFilter("user", "=", user);
+async function getAllEntities(kind, filterParams=undefined) {
+    let query = datastore.createQuery(kind);
+    if (filterParams) {
+        const propFilter = new PropertyFilter(...filterParams);
         query = query.filter(propFilter);
     }
+    
+    try {
+        const [entities] = await datastore.runQuery(query);
+        entities.forEach((entity) => entity.id = entity[Datastore.KEY].id);
+        return entities;
+    } catch (err) {
+        return handleError(err);
+    }
+}
+
+async function getAllEntitiesPaginated(kind, user=undefined, startCursor=undefined) {
+    let query = datastore.createQuery(kind).limit(PAGE_SIZE);
+    if (user) {
+        const propFilter = new PropertyFilter("user", "=", user);
+        query = query.filter(propFilter);
+    }
+    
     if (startCursor) query = query.start(startCursor);
     try {
         const [entities, info] = await datastore.runQuery(query);
@@ -389,6 +406,7 @@ module.exports = {
     getEntity,
     storeNewEntity,
     getAllEntities,
+    getAllEntitiesPaginated,
     updateEntity,
     replaceEntity,
     deleteEntity,
