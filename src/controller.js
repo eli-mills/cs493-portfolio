@@ -294,7 +294,7 @@ authentication.get("/user-info", (req, res) => {
 
 // USERS
 users.get("/", async (req, res) => {
-    const allUsers = await db.getAllEntitiesPaginated("User");
+    const allUsers = await db.getAllEntities("User");
     res.status(200).json(allUsers);
 });
 
