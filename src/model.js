@@ -359,9 +359,13 @@ async function getAllEntitiesPaginated(kind, user=undefined, startCursor=undefin
  * @returns true if successful, false if error
  */
 async function updateEntity(entity, modifications) {
+    // Clean modifications of protected attributes
+    delete modifications.id;
+    delete modifications.carrier;
+
     const kind = entity[Datastore.KEY]["kind"];
     Object.keys(entity).forEach(prop => prop in modifications && (entity[prop] = modifications[prop]));
-    delete entity.id;   // Remove id property generated from getEntity
+    //delete entity.id;   // Remove id property generated from getEntity
     
     // Validate data
     createEntityInstance(kind, entity);
