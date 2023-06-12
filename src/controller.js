@@ -70,12 +70,6 @@ function addSelfLinksToResponseList(req, res, next) {
     return next();
 }
 
-function addSelfLinkToResponse(req, res, next) {
-    req.retrievedEntity["self"] = `${getFullBaseUrl(req)}/${req.retrievedEntity.id}`;
-    req.dataToSend = req.retrievedEntity;
-    return next();
-}
-
 function getNextLink(req) {
     const cursor = req.retrievedMetaData.cursor;
     return cursor ? `${getFullBaseUrl(req)}?cursor=${cursor}` : undefined;
@@ -293,16 +287,26 @@ users.get("/", async (req, res) => {
 // BOAT/LOAD RELATIONSHIP
 boats.route("/:boatId/loads/:loadId")
 .all(checkJwt, wrap(getEntitiesFromParams), assertCorrectOwner)
-.put(wrap(async (req, res, next) => {
+.put(wrap(async (req, res) => {
     const load = req.retrievedEntities.load;
     const boat = req.retrievedEntities.boat;
     if (load.carrier !== null) return res.status(403).json({"Error": "The load is already loaded on another boat."});
     
     // Load can be assigned
     load.carrier = boat;
-    req.retrievedEntities.load = await db.replaceEntity(load);
+    await db.replaceEntity(load);
     res.status(204).end();
-    return next();
+}))
+.delete(wrap(async (req, res) => {
+    const load = req.retrievedEntities.load;
+    const boat = req.retrievedEntities.boat;
+    if (load.carrier === null || load.carrier.id !== boat.id) {
+        return res.status(404).json({"Error": "The specified boat/load pair does not exist."});
+    }
+    // Load can be removed
+    load.carrier = null;
+    await db.replaceEntity(load);
+    res.status(204).end();
 }));
 
 /****************************************************************

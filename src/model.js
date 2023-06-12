@@ -348,7 +348,6 @@ async function updateEntity(entity, modifications) {
     
     // Validate data
     createEntityInstance(kind, entity);
-    console.log(JSON.stringify(entity));
     try {
         await datastore.save(entity);
         return await getEntity(kind, entity[Datastore.KEY].id);
