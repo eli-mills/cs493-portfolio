@@ -383,7 +383,7 @@ authentication.get("/", wrap(async (req, res, next) => {
     res.status(303).redirect("/user-info");
 }));
 authentication.get("/user-info", (req, res) => {
-    res.json(req.oidc.idToken);
+    res.json({token: req.oidc.idToken, sub: jwt_decode(req.oidc.idToken).sub});
 });
 
 // USERS
