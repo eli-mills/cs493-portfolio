@@ -259,6 +259,13 @@ async function addCounter(kind, user, valueToAdd) {
  *                                                              *
  ****************************************************************/
 
+/**
+ * Create a new instance of the given Kind with the given data.
+ * 
+ * @param {string} kind 
+ * @param {Object} entityData 
+ * @returns 
+ */
 function createEntityInstance(kind, entityData) {
     const newInstance = {
         "Boat": () => {return new Boat(entityData)},
@@ -269,11 +276,11 @@ function createEntityInstance(kind, entityData) {
 }
 
 /**
- * Adds a new entity to the database.
+ * Store the given data into the database.
  * 
- * @param {object} Object containing all entity properties
- * 
- * @returns new entity, or false if error.
+ * @param {string} kind 
+ * @param {Object} entityData 
+ * @returns {Object} the stored entity, or false if error.
  */
 async function storeNewEntity(kind, entityData) {
     const newInstance = createEntityInstance(kind, entityData);
@@ -296,6 +303,7 @@ async function storeNewEntity(kind, entityData) {
  * 
  * @param {string} kind
  * @param {string} entityId 
+ * @param {boolean} isName whether the identifier is a datastore name, as opposed to an id
  * @returns matching object, or false if not found
  */
 async function getEntity(kind, entityId, isName=false) {
@@ -314,6 +322,7 @@ async function getEntity(kind, entityId, isName=false) {
  * Retrieves all entities of the given kind from the database.
  * 
  * @param {string} kind
+ * @param {Array} filterParams optional list of 3 for a Datastore filter
  * @returns list of objects, or error.
  */
 async function getAllEntities(kind, filterParams=undefined) {
@@ -332,6 +341,14 @@ async function getAllEntities(kind, filterParams=undefined) {
     }
 }
 
+/**
+ * Variant of getAllEntities that enables pagination with a start cursor.
+ * 
+ * @param {string} kind 
+ * @param {string} user optional to filter for specific user
+ * @param {string} startCursor 
+ * @returns 
+ */
 async function getAllEntitiesPaginated(kind, user=undefined, startCursor=undefined) {
     let query = datastore.createQuery(kind).limit(PAGE_SIZE);
     if (user) {
@@ -353,10 +370,11 @@ async function getAllEntitiesPaginated(kind, user=undefined, startCursor=undefin
 }
 
 /**
- * Updates the datastore-retrieved entity object to have the object's current properties.
+ * Updates the datastore-retrieved entity object to have the given modifications.
  * 
  * @param {object} entity: previously retrieved from datastore (has KEY Symbol)
- * @returns true if successful, false if error
+ * @param {object} modifications: patch to apply
+ * @returns stored entity if successful, false if error
  */
 async function updateEntity(entity, modifications) {
     // Clean modifications of protected attributes
@@ -365,7 +383,6 @@ async function updateEntity(entity, modifications) {
 
     const kind = entity[Datastore.KEY]["kind"];
     Object.keys(entity).forEach(prop => prop in modifications && (entity[prop] = modifications[prop]));
-    //delete entity.id;   // Remove id property generated from getEntity
     
     // Validate data
     createEntityInstance(kind, entity);
@@ -377,6 +394,14 @@ async function updateEntity(entity, modifications) {
     }
 }
 
+/**
+ * Replace the datastore-retrieved entity with a new object of replacementData.
+ * Retains same id.
+ * 
+ * @param {object} entity 
+ * @param {object} replacementData 
+ * @returns retrieved object if successful, else false
+ */
 async function replaceEntity(entity, replacementData=entity) {
     const kind = entity[Datastore.KEY].kind;
     const replacementEntity = createEntityInstance(kind, replacementData);
