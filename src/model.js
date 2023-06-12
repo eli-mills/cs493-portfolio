@@ -357,7 +357,7 @@ async function updateEntity(entity, modifications) {
     }
 }
 
-async function replaceEntity(entity, replacementData) {
+async function replaceEntity(entity, replacementData=entity) {
     const kind = entity[Datastore.KEY].kind;
     const replacementEntity = createEntityInstance(kind, replacementData);
     Object.assign(entity, replacementEntity.getEntityData());

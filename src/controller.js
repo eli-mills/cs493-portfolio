@@ -39,13 +39,14 @@ const checkJwt = jwt({
  *                                                              *
 ****************************************************************/
 
-function getFullBaseUrl(req, id) {
-    return `${req.protocol}://${req.get("host")}${req.baseUrl}`;
+function getFullBaseUrl(req, collectionUrl=undefined) {
+    const baseUrl = collectionUrl || req.baseUrl;
+    return `${req.protocol}://${req.get("host")}${baseUrl}`;
 }
 
-function addSelfLinkToResponse(req, res, next) {
-    req.retrievedEntities["self"] = `${getFullBaseUrl(req)}/${req.retrievedEntities.id}`;
-    req.dataToSend = req.retrievedEntities;
+
+function addSelfLinksToNestedObject(req, res, next) {
+    load.carrier.self = `${getFullBaseUrl(req, "/boats")}/${load.carrier.id}`;
     return next();
 }
 
@@ -56,12 +57,22 @@ function addSelfLinkToResponse(req, res, next) {
  * @param {string} collection: the name of the collection to use in the URL
  * @param {object} objToModify: the object where the self-link will be added
  * @returns {object} copy of object with added self property
- */
+*/
 function addSelfLinksToResponseList(req, res, next) {
-    for (const retrievedEntity of req.retrievedEntities) {
-        retrievedEntity.self = `${getFullBaseUrl(req)}/${retrievedEntity.id}`;
+    const entities = req.retrievedEntities || [req.retrievedEntity];
+    for (const entity of entities) {
+        entity.self = `${getFullBaseUrl(req)}/${entity.id}`;
+        if (entity.carrier) {
+            entity.carrier.self = `${getFullBaseUrl(req, "/boats")}/${entity.carrier.id}`;
+        }
     }
+    
+    return next();
+}
 
+function addSelfLinkToResponse(req, res, next) {
+    req.retrievedEntity["self"] = `${getFullBaseUrl(req)}/${req.retrievedEntity.id}`;
+    req.dataToSend = req.retrievedEntity;
     return next();
 }
 
@@ -72,21 +83,26 @@ function getNextLink(req) {
 
 function addMetaData(req, res, next) {
     const nextLink = getNextLink(req);
-    req.dataToSend = {
+    const dataToSend = {
         count: req.retrievedMetaData.count,
         next: nextLink,
         data: req.retrievedEntities
     }
+    req.retrievedEntities = dataToSend;
     return next();
 }
 
 function sendData(req, res) {
-    return res.json(req.dataToSend);
+    const dataToSend = req.retrievedEntity || req.retrievedEntities;
+    return res.json(dataToSend);
 }
 
 function assertCorrectOwner(req, res, next) {
-    const owner = req.retrievedEntities.user;
-    if (owner !== req.auth.sub) return res.status(403).json({"Error": "The authorized user does not have access to this endpoint."});
+    const entitiesObject = req.retrievedEntities || {entity: req.retrievedEntity};
+    for (const entity of Object.values(entitiesObject)) {
+        const owner = entity.user;
+        if (owner !== req.auth.sub) return res.status(403).json({"Error": "The authorized user does not have access to this endpoint."});
+    }
     return next();
 }
 
@@ -126,7 +142,7 @@ function mwPostEntity(kind) {
         req.body.user = req.auth.sub;
         try {
             const newBoat = await db.storeNewEntity(kind, req.body);
-            req.retrievedEntities = newBoat;
+            req.retrievedEntity = newBoat;
             res.status(201);
             return next();
         } catch (e) {
@@ -142,10 +158,20 @@ function getEntityFromParams(kind) {
     const middlewareFn = async (req, res, next) => {
         const retrievedEntity = await db.getEntity(kind, req.params.id);
         if (!retrievedEntity) return res.status(404).json({"Error": `No ${kind.toLowerCase()} with this ${kind.toLowerCase()}_id exists.`});
-        req.retrievedEntities = retrievedEntity;
+        req.retrievedEntity = retrievedEntity;
         return next();
     }
     return middlewareFn;
+}
+
+async function getEntitiesFromParams(req, res, next) {
+    const boat = await db.getEntity("Boat", req.params.boatId);
+    const load = await db.getEntity("Load", req.params.loadId);
+    if (!boat || !load) return res.status(404).json({"Error": "The specified boat and/or load does not exist."});
+
+    // Both retrieved
+    req.retrievedEntities = {boat, load};
+    return next();
 }
 
 function mwGetAllEntities(kind) {
@@ -168,10 +194,10 @@ async function mwGetEntity (req, res, next) {
 
 // PATCH
 async function mwPatchEntity(req, res, next) {
-    const retrievedEntity = req.retrievedEntities;
+    const retrievedEntity = req.retrievedEntity;
     try {
-        req.retrievedEntities = await db.updateEntity(retrievedEntity, req.body);
-        if (!req.retrievedEntities) {
+        req.retrievedEntity = await db.updateEntity(retrievedEntity, req.body);
+        if (!req.retrievedEntity) {
             return res.status(500).end();
         }
         res.status(200);
@@ -184,10 +210,10 @@ async function mwPatchEntity(req, res, next) {
 // PUT
 async function mwPutEntity (req, res, next) {
     req.body.user = req.auth.sub;
-    const retrievedEntity = req.retrievedEntities;
+    const retrievedEntity = req.retrievedEntity;
     try {
-        req.retrievedEntities = await db.replaceEntity(retrievedEntity, req.body);
-        if (!req.retrievedEntities) {
+        req.retrievedEntity = await db.replaceEntity(retrievedEntity, req.body);
+        if (!req.retrievedEntity) {
             return res.status(500).end();
         }
         res.status(200);
@@ -199,7 +225,7 @@ async function mwPutEntity (req, res, next) {
 
 // DELETE
 async function mwDeleteEntity(req, res) {
-    const entityToDelete = req.retrievedEntities;
+    const entityToDelete = req.retrievedEntity;
     if (! await db.deleteEntity(entityToDelete)) {
         return res.status(500).end();
     };
@@ -216,7 +242,7 @@ function generateEntityRouter(kind) {
     router.route("/")
     .all(checkJwt)
     .get(checkJwt, wrap(mwGetAllEntities(kind)), addSelfLinksToResponseList, addMetaData, sendData)
-    .post(assertContentJson, assertAcceptJson, wrap(mwPostEntity(kind)), addSelfLinkToResponse, sendData)
+    .post(assertContentJson, assertAcceptJson, wrap(mwPostEntity(kind)), addSelfLinksToResponseList, sendData)
     .all(methodNotAllowed);
     
     router.route("/:id")
@@ -225,7 +251,7 @@ function generateEntityRouter(kind) {
     .patch(assertAcceptJson, assertContentJson, wrap(mwPatchEntity))
     .put(assertAcceptJson, assertContentJson, wrap(mwPutEntity))
     .delete(wrap(mwDeleteEntity))
-    .all(addSelfLinkToResponse, sendData);
+    .all(addSelfLinksToResponseList, sendData);
     
     router.use(handleValidationError);
 
@@ -263,6 +289,21 @@ users.get("/", async (req, res) => {
     const allUsers = await db.getAllEntities("User");
     res.status(200).json(allUsers);
 });
+
+// BOAT/LOAD RELATIONSHIP
+boats.route("/:boatId/loads/:loadId")
+.all(checkJwt, wrap(getEntitiesFromParams), assertCorrectOwner)
+.put(wrap(async (req, res, next) => {
+    const load = req.retrievedEntities.load;
+    const boat = req.retrievedEntities.boat;
+    if (load.carrier !== null) return res.status(403).json({"Error": "The load is already loaded on another boat."});
+    
+    // Load can be assigned
+    load.carrier = boat;
+    req.retrievedEntities.load = await db.replaceEntity(load);
+    res.status(204).end();
+    return next();
+}));
 
 /****************************************************************
  *                                                              *
